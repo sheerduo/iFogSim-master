@@ -3,6 +3,7 @@ package org.fog.placement;
 import org.fog.application.AppModule;
 import org.fog.application.Application;
 import org.fog.entities.Actuator;
+import org.fog.entities.AreaOfDevice;
 import org.fog.entities.FogDevice;
 import org.fog.entities.Sensor;
 
@@ -34,6 +35,7 @@ public class IntelAgent extends ModulePlacement {
     protected List<Actuator> actuators;
     protected Map<Integer, Double> currentCpuLoad;
     private PlaceMappingGenerted placeMappingGenerted;
+    private List<AreaOfDevice> areas;
     /**
      * 最后生成结果
      * 每个App对应一个moduleMapping
@@ -48,7 +50,7 @@ public class IntelAgent extends ModulePlacement {
 
 
     public IntelAgent(List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators,
-                      List<Application> applications, Map<String, ModuleMapping> moduleMappings){
+                      List<Application> applications, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
         this.setFogDevices(fogDevices);
         this.setApplications(applications);
         //this.setModuleMapping(moduleMapping);
@@ -58,6 +60,7 @@ public class IntelAgent extends ModulePlacement {
         setActuators(actuators);
         setModuleMappings(moduleMappings);
         setCurrentCpuLoad(new HashMap<Integer, Double>());
+        setAreas(areas);
        /* setCurrentModuleMap(new HashMap<Integer, List<String>>());
         setCurrentModuleLoadMap(new HashMap<Integer, Map<String, Double>>());
         setCurrentModuleInstanceNum(new HashMap<Integer, Map<String, Integer>>());*/
@@ -67,7 +70,7 @@ public class IntelAgent extends ModulePlacement {
             getCurrentModuleMap().put(dev.getId(), new ArrayList<String>());
             getCurrentModuleInstanceNum().put(dev.getId(), new HashMap<String, Integer>());*/
         }
-        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators,applications, moduleMappings);
+        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators,applications, moduleMappings,areas);
     }
 
     /**
@@ -87,7 +90,7 @@ public class IntelAgent extends ModulePlacement {
         while(K<T){
             Loop=0;
             while(Loop<N) {
-                placeMappingGenerted.genertedPlacement();//产生新的邻域解
+                //placeMappingGenerted.genertedPlacement();//产生新的邻域解
                 double value = valuePlacement();
                 if (value < 0) {
                     if(Math.exp(0-(value/tem))>Math.random()) {
@@ -95,7 +98,7 @@ public class IntelAgent extends ModulePlacement {
                         Loop++;
                         //新解不优于  但决定向其他方向寻找
                         //TODO
-                        placeMappingGenerted.genertedPlacement();
+                        //placeMappingGenerted.genertedPlacement();//生成新解
                     }else{
                         Loop++;
                         //新解不优于 继续寻找
@@ -117,6 +120,8 @@ public class IntelAgent extends ModulePlacement {
     public double valuePlacement(){
         return 0.0;
     }
+
+
     @Override
     public List<FogDevice> getFogDevices() {
         return fogDevices;
@@ -219,5 +224,13 @@ public class IntelAgent extends ModulePlacement {
 
     public void setBestModuleMappings(Map<String, ModuleMapping> bestModuleMappings) {
         this.bestModuleMappings = bestModuleMappings;
+    }
+
+    public List<AreaOfDevice> getAreas() {
+        return areas;
+    }
+
+    public void setAreas(List<AreaOfDevice> areas) {
+        this.areas = areas;
     }
 }
