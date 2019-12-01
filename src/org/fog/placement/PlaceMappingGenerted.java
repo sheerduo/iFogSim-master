@@ -24,6 +24,10 @@ public class PlaceMappingGenerted extends ModulePlacement{
     protected List<Actuator> actuators;
     protected List<AreaOfDevice> areas;//areas of devices   第三级节点下的所有子节点组成一个area  model放置在area与上级节点之间选择
     protected Map<Integer, Double> currentCpuLoad;
+
+    Map<String, Integer> sensorsAssociated ;  //返回不同类型的sensor
+    Map<Integer, Integer> sensorsOfDevcie; //每个device对应的sensor数量
+    Map<String, Integer> actuatorsAssociated;
     public PlaceMappingGenerted(List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators,
                                 List<Application> applications, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
 
@@ -37,8 +41,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
             List<String> placedModules = new ArrayList<String>();
             for(FogDevice device : area.getArea()) {
                 //FogDevice device = getFogDeviceById(deviceId);
-                Map<String, Integer> sensorsAssociated = getAssociatedSensors(device);
-                Map<String, Integer> actuatorsAssociated = getAssociatedActuators(device);
+                getAssociatedSensors(device);  //返回不同类型的sensor
+                sensorsOfDevcie.put(device.getId(), getAssociatedSensors(device));
+                actuatorsAssociated = getAssociatedActuators(device);
                 placedModules.addAll(sensorsAssociated.keySet()); // ADDING ALL SENSORS TO PLACED LIST
                 placedModules.addAll(actuatorsAssociated.keySet()); // ADDING ALL ACTUATORS TO PLACED LIST
             }
@@ -76,6 +81,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
         //切记前面的device为低层级的 后面的为高层级的
         for(Application app:getApplications()){
             ModuleMapping mapping = ModuleMapping.createModuleMapping();
+            int sensorNum = sensorsAssociated.get(app.getEdges().get(0).getSource());//获取sensor数量  sensor数量代表需要放置的module数量！
             int max = Max;//初始max代表所有device
             int min = 1;
             int sensors = 10;
@@ -131,16 +137,18 @@ public class PlaceMappingGenerted extends ModulePlacement{
         return endpoints;
     }
 
-    private Map<String, Integer> getAssociatedSensors(FogDevice device) {
-        Map<String, Integer> endpoints = new HashMap<String, Integer>();
+    private int getAssociatedSensors(FogDevice device) {   //默认每个device只接受一种Sensor
+        Map<Integer, Integer> endpoints = new HashMap<Integer, Integer>();
+        int num = 0;
         for(Sensor sensor : getSensors()){
             if(sensor.getGatewayDeviceId()==device.getId()){
-                if(!endpoints.containsKey(sensor.getTupleType()))
-                    endpoints.put(sensor.getTupleType(), 0);
-                endpoints.put(sensor.getTupleType(), endpoints.get(sensor.getTupleType())+1);
+                if(!sensorsAssociated.containsKey(sensor.getTupleType()))
+                    sensorsAssociated.put(sensor.getTupleType(), 0);
+                sensorsAssociated.put(sensor.getTupleType(), endpoints.get(sensor.getTupleType())+1);
+                num++;
             }
         }
-        return endpoints;
+        return num;
     }
 
     public List<FogDevice> getFogDevices() {
