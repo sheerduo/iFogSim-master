@@ -86,7 +86,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
             int min = 1;
             int sensors = 10;
             boolean flag1 = true;
-            for(AppEdge edge:app.getEdges()){//placeedModules提前只能指定底层级的
+            Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案
+            app.getEdges().size();
+            for(AppEdge edge:app.getEdges()){//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
                 if(!placedModules.contains(edge.getDestination())) {
 
                     String moduleName = edge.getDestination();
