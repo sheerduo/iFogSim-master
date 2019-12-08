@@ -60,8 +60,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
      * 主调用接口 生成各个App的MapPlacement
      * @return
      */
-    public Map<String, ModuleMapping> genertedPlacement(List<String> placedModules, AreaOfDevice area, int level){
-        Map<String, ModuleMapping> result1 = new HashMap<>();
+    public Map<String, Map<Integer, List<Integer>>> genertedPlacement(List<String> placedModules, AreaOfDevice area, int level){
+        Map<String, Map<Integer, List<Integer>>> result1 = new HashMap<>();
         List<FogDevice> devices = new ArrayList<>();
         for(FogDevice d : area.getArea()){
             devices.add(d);
@@ -80,18 +80,28 @@ public class PlaceMappingGenerted extends ModulePlacement{
         }
         //切记前面的device为低层级的 后面的为高层级的
         for(Application app:getApplications()){
-            ModuleMapping mapping = ModuleMapping.createModuleMapping();
-            int sensorNum = sensorsAssociated.get(app.getEdges().get(0).getSource());//获取sensor数量  sensor数量代表需要放置的module数量！
+            //ModuleMapping mapping = ModuleMapping.createModuleMapping();
+            //int sensorNum = sensorsAssociated.get(app.getEdges().get(0).getSource());//获取sensor数量  sensor数量代表需要放置的module数量！
             int max = Max;//初始max代表所有device
             int min = 1;
-            int sensors = 10;
-            boolean flag1 = true;
+            //int sensors = 10;
+            //boolean flag1 = true;
             Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案
-            app.getEdges().size();
-            for(AppEdge edge:app.getEdges()){//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
-                if(!placedModules.contains(edge.getDestination())) {
-
-                    String moduleName = edge.getDestination();
+            for(Sensor sen:sensors) {
+                if(sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
+                    List<Integer> de2place = new ArrayList<>();
+                    int numOfArea = area.getArea().size();
+                    int mid = numOfArea;
+                    int temp = mid;
+                    for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
+                        if (!placedModules.contains(edge.getDestination())) {
+                            int place2 = (int)(Math.random()*(max-min));
+                            if(place2>mid&&place2>temp){
+                                temp = place2;
+                                min = temp;
+                            }
+                            de2place.add(place2);
+                   /* String moduleName = edge.getDestination();
                     int nums = (int) (Math.random() * (sensors));
                     int nn = area.getArea().size();
                     int n = (nums > nn) ? nn : nums;
@@ -113,10 +123,14 @@ public class PlaceMappingGenerted extends ModulePlacement{
                     for(int sd : ds){
                         String name = getFogDeviceById(sd).getName();
                         mapping.addModuleToDevice(moduleName, name);//放入
+                    }*/
+                        }
                     }
+                    modulemap.put(sen.getId(), de2place);
                 }
+
             }
-            result1.put(app.getAppId(), mapping);
+            result1.put(app.getAppId(), modulemap);
 
         }
         return result1;
