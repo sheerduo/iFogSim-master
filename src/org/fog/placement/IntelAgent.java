@@ -78,7 +78,9 @@ public class IntelAgent extends ModulePlacement {
      * @return
      */
     public Map<String, ModuleMapping> findBestModuleMappings(){
-        SA_method(0,0,0,0);//TODO  启动算法 开始迭代
+        for(AreaOfDevice area : areas) {
+            SA_method(0, 0, 0, 0);//TODO  启动算法 开始迭代
+        }
         return bestModuleMappings;//返回结果
     }
 
