@@ -14,10 +14,7 @@ import org.fog.application.AppLoop;
 import org.fog.application.Application;
 import org.fog.application.selectivity.FractionalSelectivity;
 import org.fog.entities.*;
-import org.fog.placement.Controller;
-import org.fog.placement.ModuleMapping;
-import org.fog.placement.ModulePlacementEdgewards;
-import org.fog.placement.ModulePlacementMapping;
+import org.fog.placement.*;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
@@ -26,10 +23,7 @@ import org.fog.utils.NeighborInArea;
 import org.fog.utils.TimeKeeper;
 import org.fog.utils.distribution.DeterministicDistribution;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class DCNSFogAndHealthCare2 {
     static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
@@ -41,6 +35,7 @@ public class DCNSFogAndHealthCare2 {
     static int numOfDepts = 2;
     static int numOfMobilesPerDept = 1;
 
+    private static List<AreaOfDevice> areas = new ArrayList<AreaOfDevice>();
 
     public static void main(String[] args) {
 
@@ -70,6 +65,15 @@ public class DCNSFogAndHealthCare2 {
 
             ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
             ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
+
+            List<Application> apps = new ArrayList<>();
+            apps.add(application_d);
+            apps.add(application_h);
+            Map<String, ModuleMapping> mappings = new HashMap<>();
+            mappings.put(application_d.getAppId(), moduleMapping_d);
+            mappings.put(application_h.getAppId(), moduleMapping_h);
+
+            PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
 
             for(FogDevice device : fogDevices){
                 if(device.getName().startsWith("md")){
@@ -187,6 +191,8 @@ public class DCNSFogAndHealthCare2 {
                 AreaFogDevices.add(mobile_d);
                 neighbors.add(mobile_d.getSelfInfo());
             }
+            AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+            areas.add(areaOfDevice);
            /* for(int num=0;num<numofHe;num++){
                 FogDevice mobile_h = addMobile_H(mobileId+"-"+num, dept.getId()); // adding mobiles to the physical topology. Smartphones have been modeled as fog devices as well.
                 mobile_h.setUplinkLatency(10); // latency of connection between the smartphone and proxy server is 4 ms
@@ -226,6 +232,8 @@ public class DCNSFogAndHealthCare2 {
                 AreaFogDevices.add(mobile_h);
                 neighbors.add(mobile_h.getSelfInfo());
             }
+            AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+            areas.add(areaOfDevice);
             for(FogDevice fog : AreaFogDevices){
                 fog.setNeighbors(neighbors);
             }

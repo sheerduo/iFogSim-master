@@ -25,9 +25,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
     protected List<AreaOfDevice> areas;//areas of devices   第三级节点下的所有子节点组成一个area  model放置在area与上级节点之间选择
     protected Map<Integer, Double> currentCpuLoad;
 
-    Map<String, Integer> sensorsAssociated ;  //返回不同类型的sensor
-    Map<Integer, Integer> sensorsOfDevcie; //每个device对应的sensor数量
-    Map<String, Integer> actuatorsAssociated;
+    Map<String, Integer> sensorsAssociated = new HashMap<>() ;  //返回不同类型的sensor
+    Map<Integer, Integer> sensorsOfDevcie = new HashMap<>(); //每个device对应的sensor数量
+    Map<String, Integer> actuatorsAssociated = new HashMap<>();
     public PlaceMappingGenerted(List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators,
                                 List<Application> applications, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
 
@@ -66,13 +66,14 @@ public class PlaceMappingGenerted extends ModulePlacement{
         for(FogDevice d : area.getArea()){
             devices.add(d);
         }
-        FogDevice device1 = area.getArea().get(0);
+        FogDevice dd = area.getArea().get(0);
         boolean flag = true;
         int Max = area.getArea().size();
         //将Area内以及上级的device都纳入范围
         while(flag){
-            FogDevice dd = getDeviceById(device1.getParentId());
-            if(dd.getName().equals("Cloud")){//向上寻找所有上级device
+            dd = getDeviceById(dd.getParentId());
+            System.out.println(dd.getName());
+            if(dd.getName().equals("cloud")){//向上寻找所有上级device
                 flag = false;
             }
             devices.add(dd);
@@ -86,16 +87,17 @@ public class PlaceMappingGenerted extends ModulePlacement{
             int min = 1;
             //int sensors = 10;
             //boolean flag1 = true;
-            Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案
+            Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
             for(Sensor sen:sensors) {
                 if(sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
                     List<Integer> de2place = new ArrayList<>();
                     int numOfArea = area.getArea().size();
                     int mid = numOfArea;
                     int temp = mid;
+                    System.out.println("area size: " + numOfArea);
                     for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
                         if (!placedModules.contains(edge.getDestination())) {
-                            int place2 = (int)(Math.random()*(max-min));
+                            int place2 = (int)(min+Math.random()*(max-min));
                             if(place2>mid&&place2>temp){
                                 temp = place2;
                                 min = temp;
@@ -127,12 +129,14 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         }
                     }
                     modulemap.put(sen.getId(), de2place);
+                    min = 1;
                 }
 
             }
             result1.put(app.getAppId(), modulemap);
 
         }
+        System.out.println("generted mapping" + result1);
         return result1;
     }
 
@@ -154,13 +158,13 @@ public class PlaceMappingGenerted extends ModulePlacement{
     }
 
     private int getAssociatedSensors(FogDevice device) {   //默认每个device只接受一种Sensor
-        Map<Integer, Integer> endpoints = new HashMap<Integer, Integer>();
+       // Map<Integer, Integer> endpoints = new HashMap<Integer, Integer>();
         int num = 0;
         for(Sensor sensor : getSensors()){
             if(sensor.getGatewayDeviceId()==device.getId()){
                 if(!sensorsAssociated.containsKey(sensor.getTupleType()))
                     sensorsAssociated.put(sensor.getTupleType(), 0);
-                sensorsAssociated.put(sensor.getTupleType(), endpoints.get(sensor.getTupleType())+1);
+                sensorsAssociated.put(sensor.getTupleType(), sensorsAssociated.get(sensor.getTupleType()+1));
                 num++;
             }
         }
