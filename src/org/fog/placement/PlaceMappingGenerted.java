@@ -83,8 +83,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
         for(Application app:getApplications()){
             //ModuleMapping mapping = ModuleMapping.createModuleMapping();
             //int sensorNum = sensorsAssociated.get(app.getEdges().get(0).getSource());//获取sensor数量  sensor数量代表需要放置的module数量！
-            int max = Max;//初始max代表所有device
-            int min = 1;
+            int max = Max-1;//初始max代表所有device
+            int min = 0;
             //int sensors = 10;
             //boolean flag1 = true;
             Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
@@ -137,7 +137,17 @@ public class PlaceMappingGenerted extends ModulePlacement{
 
         }
         System.out.println("generted mapping" + result1);
+
+
         return result1;
+    }
+
+    public void placeFunction(List<String> placedModules, AreaOfDevice area, int level){
+        Map<Integer, Map<String, Integer>> moduleNumOnDevice = new HashMap<>();// map<deviceId, map<module, num>>
+        Map<String, Map<Integer, List<Integer>>> result = genertedPlacement(placedModules, area,level);
+        for(Application app : applications){
+            Map<Integer, List<Integer>> appMap = result.get(app.getAppId());
+        }
     }
 
     /**

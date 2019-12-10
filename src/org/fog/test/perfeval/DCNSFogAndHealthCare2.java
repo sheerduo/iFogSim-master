@@ -178,7 +178,7 @@ public class DCNSFogAndHealthCare2 {
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
-            int numofDc = 1;
+            int numofDc = 5;
             int numofHe = 1;
             List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
@@ -213,7 +213,7 @@ public class DCNSFogAndHealthCare2 {
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 2;
-            int numofHe = 2;
+            int numofHe = 5;
             List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
             //List<NeighborInArea> neighborsOfH = new ArrayList<NeighborInArea>();
