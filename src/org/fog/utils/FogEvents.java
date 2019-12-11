@@ -33,4 +33,5 @@ public class FogEvents {
 	public static final int ASK_NEIGHBOR = BASE+28;
 	public static final int ANSWER_NEIGHBOR = BASE+29;
 	public static final int NEIGHBOR_MODULE_LAUNCH = BASE+30;
+	public static final int STOP_GENERTED_SIMULATION = BASE+31;
 }

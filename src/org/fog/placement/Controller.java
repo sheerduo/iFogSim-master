@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
@@ -25,14 +26,14 @@ public class Controller extends SimEntity{
 	
 	public static boolean ONLY_CLOUD = false;
 		
-	private List<FogDevice> fogDevices;
-	private List<Sensor> sensors;
-	private List<Actuator> actuators;
+	protected List<FogDevice> fogDevices;
+    protected List<Sensor> sensors;
+    protected List<Actuator> actuators;
 	
-	private Map<String, Application> applications;
-	private Map<String, Integer> appLaunchDelays;
+	protected Map<String, Application> applications;
+    protected Map<String, Integer> appLaunchDelays;
 
-	private Map<String, ModulePlacement> appModulePlacementPolicy;
+    protected Map<String, ModulePlacement> appModulePlacementPolicy;
 	
 	public Controller(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators) {
 		super(name);
@@ -106,9 +107,16 @@ public class Controller extends SimEntity{
 			printNetworkUsageDetails();
 			System.exit(0);
 			break;
-			
+		default:
+		    processOtherEvent(ev);
+		    break;
 		}
 	}
+    protected void processOtherEvent(SimEvent ev) {
+        if (ev == null) {
+            Log.printLine(getName() + ".processOtherEvent(): Error - an event is null.");
+        }
+    }
 	
 	private void printNetworkUsageDetails() {
 		System.out.println("Total network usage = "+NetworkUsageMonitor.getNetworkUsage()/Config.MAX_SIMULATION_TIME);		
@@ -131,7 +139,7 @@ public class Controller extends SimEntity{
 		}
 	}
 
-	private String getStringForLoopId(int loopId){
+	protected String getStringForLoopId(int loopId){
 		for(String appId : getApplications().keySet()){
 			Application app = getApplications().get(appId);
 			for(AppLoop loop : app.getLoops()){
@@ -221,7 +229,7 @@ public class Controller extends SimEntity{
 		processAppSubmit(app);
 	}
 	
-	private void processAppSubmit(Application application){
+	protected void processAppSubmit(Application application){
 		System.out.println(CloudSim.clock()+" Submitted application "+ application.getAppId());
 		FogUtils.appIdToGeoCoverageMap.put(application.getAppId(), application.getGeoCoverage());
 		getApplications().put(application.getAppId(), application);
