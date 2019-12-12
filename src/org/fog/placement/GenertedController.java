@@ -2,19 +2,29 @@ package org.fog.placement;
 
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEvent;
+import org.fog.application.Application;
 import org.fog.entities.Actuator;
+import org.fog.entities.AreaOfDevice;
 import org.fog.entities.FogDevice;
 import org.fog.entities.Sensor;
 import org.fog.utils.Config;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GenertedController extends Controller {
 
-    public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators){
+    private PlaceMappingGenerted placeMappingGenerted;
+    private List<Application> apps ;
+    Map<String, ModuleMapping> moduleMappings;
+    List<AreaOfDevice> areas;
+    public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
         super(name, fogDevices, sensors, actuators);
+        this.apps = apps;
+        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators ,apps, moduleMappings, areas);
     }
 
     public void startGenerted(){
@@ -50,20 +60,21 @@ public class GenertedController extends Controller {
 
     public void generted(){
 
-
     }
 
     public void SA_method(double tem,int T,int N,double q) {
         //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
         int K=0;
-        int Loop=0;
+        int Loop;
         int count=0;//记录随机变差过程中的接受次数
+        int best = Integer.MAX_VALUE;
         while(K<T){
             Loop=0;
             while(Loop<N) {
-                //placeMappingGenerted.genertedPlacement();//产生新的邻域解
+                //device 清空
+                placeMappingGenerted.generted();//产生新的邻域解
                 double value = valuePlacement();
-                if (value < 0) {
+                if (value - best < 0) {
                     if(Math.exp(0-(value/tem))>Math.random()) {
                         count++;
                         Loop++;
@@ -96,7 +107,7 @@ public class GenertedController extends Controller {
             value+=value1;
             System.out.println(getStringForLoopId(loopId) + " ---> "+value1 + " nums: " + TimeKeeper.getInstance().getLoopIdToCurrentNum().get(loopId));
         }
-        return 0.0;
+        return value;
     }
 
 }

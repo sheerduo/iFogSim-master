@@ -19,6 +19,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
     /**
      * 每个App对应一个moduleMapping
      */
+
+    private Map<String, List<String>> mapping = new HashMap<>();
     private Map<String, ModuleMapping> moduleMappings;
     protected List<Sensor> sensors;
     protected List<Actuator> actuators;
@@ -38,12 +40,21 @@ public class PlaceMappingGenerted extends ModulePlacement{
         setApplications(applications);
         setModuleMappings(moduleMappings);
         setAreas(areas);
-
+        for(AreaOfDevice area: areas) {
+            for(FogDevice dev: area.getArea()){
+                if(!sensorsOfDevcie.containsKey(dev.getId())){
+                    sensorsOfDevcie.put(dev.getId(), new ArrayList<>());
+                }
+                List<Sensor> sens = getAssociatedSensors(dev);
+                sensorsOfDevcie.put(dev.getId(), sens);
+            }
+            genertedPlacement(area, 0);
+        }
     }
 
     public void generted(){
         Map<String, Map<Integer, List<Integer>>> result = new HashMap<>();
-        Map<Integer, List<String>> mapping = new HashMap<>();
+
         for(AreaOfDevice  area : areas){
             for(FogDevice device : area.getArea()) {
                 //FogDevice device = getFogDeviceById(deviceId);
@@ -54,12 +65,46 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 placedModules.addAll(actuatorsAssociated.keySet()); // ADDING ALL ACTUATORS TO PLACED LIST
             }
             result = genertedPlacement(area, 3);
+            //List<String> appName = result.keySet();
+            int numOfApp = 0;
+            for(String appname : result.keySet()){
+                Map<Integer, List<Integer>> mm = result.get(appname);
+                for(Integer sensorId : mm.keySet()){
+                    List<Integer> devices = mm.get(sensorId);
+                    Application app = applications.get(numOfApp);
+                    List<AppEdge> edges = app.getEdges();
+                    for(int i=0;i<edges.size()-1;i++){
+                        AppEdge edge = edges.get(i);
+                        String module = edge.getDestination();
+                        Integer devId = devices.get(i);
+                        String devName = getDeviceById(devId).getName();
+                        if(!mapping.containsKey(devName)){
+                            mapping.put(devName, new ArrayList<String>());
+                        }
+                        List<String> modules = mapping.get(devName);
+                        modules.add(module);
+                        mapping.put(devName, modules);
+                    }
+                }
+                numOfApp++;
+            }
         }
+        mapModules();
     }
 
     @Override
     protected void mapModules() {
-
+        //Map<String, List<String>> mapping = moduleMapping.getModuleMapping();
+        for(String deviceName : mapping.keySet()){
+            FogDevice device = getDeviceByName(deviceName);
+            for(String moduleName : mapping.get(deviceName)){
+                AppModule module = getApplication().getModuleByName(moduleName);
+                if(module == null)
+                    continue;
+                createModuleInstanceOnDevice(module, device);
+                //getModuleInstanceCountMap().get(device.getId()).put(moduleName, mapping.get(deviceName).get(moduleName));
+            }
+        }
     }
 
     /**
