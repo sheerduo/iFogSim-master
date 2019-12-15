@@ -5,6 +5,7 @@ import org.cloudbus.cloudsim.VmAllocationPolicy;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.utils.FogEvents;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,19 +85,34 @@ public class MyFogDevice extends FogDevice{
     }
 
 
+    /*
+    **更改checkFinished
+    * source 需要改变？？  先这么写了
+     */
+
     @Override
     protected boolean canBeProcessedBySelf(SimEvent ev) {
-        return super.canBeProcessedBySelf(ev);
-
-
+        boolean result = false;
+        Tuple tuple = (Tuple)ev.getData();
+        int sourceSensor = tuple.getSourceSensor();
+        String moduleName = tuple.getDestModuleName();
+        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
+        if(toDevcieId==this.getId()){
+            processTupleArrival(ev);
+            return true;
+        }
+        sendNeighbor(tuple, toDevcieId);
+        return false;
     }
 
     /**
      * 解析sensorModuleMap  放在上一层？？
      * @param sensorModuleMap
      */
-    @Override
+    /*@Override
     public void setSensorModuleMap(Map<String, Map<Integer, List<Integer>>> sensorModuleMap) {  //
-        super.setSensorModuleMap(sensorModuleMap);
-    }
+        //super.setSensorModuleMap(sensorModuleMap);
+
+
+    }*/
 }

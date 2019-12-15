@@ -27,6 +27,7 @@ public class Tuple extends Cloudlet{
 	private int deadline;
 	private int level;
 	private int acutualsource = -1;
+	private int sourceSensor = -1;
 	/**
 	 * Map to keep track of which module instances has a tuple traversed.
 	 * 
@@ -170,4 +171,11 @@ public class Tuple extends Cloudlet{
 
     public void setAcutualsource(int acutualsource){this.acutualsource = acutualsource;}
 
+	public int getSourceSensor() {
+		return sourceSensor;
+	}
+
+	public void setSourceSensor(int sourceSensor) {
+		this.sourceSensor = sourceSensor;
+	}
 }

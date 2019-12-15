@@ -98,7 +98,7 @@ public class FogDevice extends PowerDatacenter {
     protected long notOk = 0;
     protected Map<Integer, List<String>> appToModulesMapNeighbor =new HashMap<Integer, List<String>>(){{}};
 
-    protected Map<String, Map<Integer, List<Integer>>> sensorModuleMap;
+    protected Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>();
 
 
     protected int tasknum = 0;
@@ -1677,11 +1677,12 @@ public class FogDevice extends PowerDatacenter {
         return selfInfo;
     }
 
-    public Map<String, Map<Integer, List<Integer>>> getSensorModuleMap() {
-        return sensorModuleMap;
+    public Map<Integer, Map<String, Integer>> getSensorModuleChaineMap() {
+        return sensorModuleChaineMap;
     }
 
-    public void setSensorModuleMap(Map<String, Map<Integer, List<Integer>>> sensorModuleMap) {
-        this.sensorModuleMap = sensorModuleMap;
+    public void setSensorModuleChaineMap(Map<Integer, Map<String, Integer>> sensorModuleChaineMap) {
+        this.sensorModuleChaineMap = sensorModuleChaineMap;
+        System.out.println(this.getName() + "  :  sensorModuleChaineMap:  " + sensorModuleChaineMap);
     }
 }
