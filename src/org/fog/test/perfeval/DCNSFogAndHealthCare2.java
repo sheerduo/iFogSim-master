@@ -74,7 +74,7 @@ public class DCNSFogAndHealthCare2 {
             mappings.put(application_h.getAppId(), moduleMapping_h);
 
             PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
-
+            placeMappingGenerted.generted();
             for(FogDevice device : fogDevices){
                 if(device.getName().startsWith("md")){
                     moduleMapping_d.addModuleToDevice("motion_detector", device.getName());  // fixing all instances of the Client module to the Smartphones

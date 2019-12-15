@@ -53,9 +53,14 @@ public class GenertedController extends Controller {
         switch(ev.getTag()){
             case FogEvents.STOP_GENERTED_SIMULATION:
                 CloudSim.stopSimulation();
+                clearDeviceAppMap();
                 System.exit(0);
                 break;
         }
+    }
+
+    private void clearFogDeviceModule(){
+
     }
 
     public void generted(){
@@ -108,6 +113,12 @@ public class GenertedController extends Controller {
             System.out.println(getStringForLoopId(loopId) + " ---> "+value1 + " nums: " + TimeKeeper.getInstance().getLoopIdToCurrentNum().get(loopId));
         }
         return value;
+    }
+
+    private void clearDeviceAppMap(){
+        for(FogDevice d : fogDevices){
+            d.clearAppToModuleMap();
+        }
     }
 
 }

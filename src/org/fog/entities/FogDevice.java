@@ -98,6 +98,8 @@ public class FogDevice extends PowerDatacenter {
     protected long notOk = 0;
     protected Map<Integer, List<String>> appToModulesMapNeighbor =new HashMap<Integer, List<String>>(){{}};
 
+    protected Map<String, Map<Integer, List<Integer>>> sensorModuleMap;
+
 
     protected int tasknum = 0;
     protected List<Pair<Integer,Integer>> tupleExecuting = new ArrayList<Pair<Integer,Integer>>();//pair.first=actualTupleId pair.second=cloudeletId
@@ -336,7 +338,7 @@ public class FogDevice extends PowerDatacenter {
      * Perform miscellaneous resource management tasks
      * @param ev
      */
-    private void manageResources(SimEvent ev) {
+    protected void manageResources(SimEvent ev) {
         updateEnergyConsumption();
         send(getId(), Config.RESOURCE_MGMT_INTERVAL, FogEvents.RESOURCE_MGMT);
     }
@@ -345,7 +347,7 @@ public class FogDevice extends PowerDatacenter {
      * Updating the number of modules of an application module on this device
      * @param ev instance of SimEvent containing the module and no of instances
      */
-    private void updateModuleInstanceCount(SimEvent ev) {
+    protected void updateModuleInstanceCount(SimEvent ev) {
         ModuleLaunchConfig config = (ModuleLaunchConfig)ev.getData();
         String appId = config.getModule().getAppId();
         if(!moduleInstanceCount.containsKey(appId))
@@ -369,7 +371,7 @@ public class FogDevice extends PowerDatacenter {
      * Sending periodic tuple for an application edge. Note that for multiple instances of a single source module, only one tuple is sent DOWN while instanceCount number of tuples are sent UP.
      * @param ev SimEvent instance containing the edge to send tuple on
      */
-    private void sendPeriodicTuple(SimEvent ev) {
+    protected void sendPeriodicTuple(SimEvent ev) {
         AppEdge edge = (AppEdge)ev.getData();
         String srcModule = edge.getSource();
         AppModule module = getModuleByName(srcModule);
@@ -1481,6 +1483,10 @@ public class FogDevice extends PowerDatacenter {
 
     }
 
+    public void clearAppToModuleMap(){
+        this.appToModulesMap.clear();
+    }
+
 
 
     protected void sendToSelf(Tuple tuple){
@@ -1671,5 +1677,11 @@ public class FogDevice extends PowerDatacenter {
         return selfInfo;
     }
 
+    public Map<String, Map<Integer, List<Integer>>> getSensorModuleMap() {
+        return sensorModuleMap;
+    }
 
+    public void setSensorModuleMap(Map<String, Map<Integer, List<Integer>>> sensorModuleMap) {
+        this.sensorModuleMap = sensorModuleMap;
+    }
 }

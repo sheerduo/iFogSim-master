@@ -48,13 +48,23 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 List<Sensor> sens = getAssociatedSensors(dev);
                 sensorsOfDevcie.put(dev.getId(), sens);
             }
-            genertedPlacement(area, 0);
+           // genertedPlacement(area, 0);
         }
     }
 
-    public void generted(){
+    /**
+     * 返回 the list of module  顺序与 application 相当
+     * @return
+     */
+
+    public List<ModulePlacement> generted(){
         Map<String, Map<Integer, List<Integer>>> result = new HashMap<>();
 
+        List<ModuleMapping> moduleMappingList = new ArrayList<>();
+        for(int i=0;i<2;i++){
+            ModuleMapping moduleMapping1 = ModuleMapping.createModuleMapping();
+            moduleMappingList.add(moduleMapping1);
+        }
         for(AreaOfDevice  area : areas){
             for(FogDevice device : area.getArea()) {
                 //FogDevice device = getFogDeviceById(deviceId);
@@ -65,19 +75,24 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 placedModules.addAll(actuatorsAssociated.keySet()); // ADDING ALL ACTUATORS TO PLACED LIST
             }
             result = genertedPlacement(area, 3);
+            for(FogDevice device : area.getArea()){
+                device.setSensorModuleMap(result);
+            }
             //List<String> appName = result.keySet();
             int numOfApp = 0;
             for(String appname : result.keySet()){
                 Map<Integer, List<Integer>> mm = result.get(appname);
+                ModuleMapping moduleMapping = moduleMappingList.get(numOfApp);
                 for(Integer sensorId : mm.keySet()){
                     List<Integer> devices = mm.get(sensorId);
                     Application app = applications.get(numOfApp);
                     List<AppEdge> edges = app.getEdges();
-                    for(int i=0;i<edges.size()-1;i++){
+                    for(int i=0;i<devices.size();i++){
                         AppEdge edge = edges.get(i);
                         String module = edge.getDestination();
                         Integer devId = devices.get(i);
                         String devName = getDeviceById(devId).getName();
+                        moduleMapping.addModuleToDevice(edge.getDestination(), devName);
                         if(!mapping.containsKey(devName)){
                             mapping.put(devName, new ArrayList<String>());
                         }
@@ -89,22 +104,26 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 numOfApp++;
             }
         }
-        mapModules();
+        System.out.println("modulemapping:  ");
+        for(int i=0; i<2;i++){
+            System.out.println(moduleMappingList.get(i).moduleMapping);
+        }
+        //mapModules();
+        List<ModulePlacement> modulePlacementList = new ArrayList<>();
+       // ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(0), moduleMappingList.get(0));
+        //ModulePlacement modulePlacement2 = new ModulePlacementMapping(fogDevices, applications.get(1), moduleMappingList.get(1));
+        for(int i=0;i<2;i++){
+            ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(i), moduleMappingList.get(i));
+            modulePlacement1.mapModules();
+            modulePlacementList.add(modulePlacement1);
+        }
+        return modulePlacementList;
     }
 
     @Override
     protected void mapModules() {
         //Map<String, List<String>> mapping = moduleMapping.getModuleMapping();
-        for(String deviceName : mapping.keySet()){
-            FogDevice device = getDeviceByName(deviceName);
-            for(String moduleName : mapping.get(deviceName)){
-                AppModule module = getApplication().getModuleByName(moduleName);
-                if(module == null)
-                    continue;
-                createModuleInstanceOnDevice(module, device);
-                //getModuleInstanceCountMap().get(device.getId()).put(moduleName, mapping.get(deviceName).get(moduleName));
-            }
-        }
+
     }
 
     /**
@@ -149,8 +168,14 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         int mid = numOfArea;
                         int temp = mid;
                         //System.out.println("area size: " + numOfArea);
+                        List<String> hasPlacedModules = new ArrayList<>();
+                        for(String ss : placedModules){
+                            hasPlacedModules.add(ss);
+                        }
                         for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
-                            if (!placedModules.contains(edge.getDestination())) {
+                            //System.out.println("hasPlacedModules:  " + placedModules + "edge.destination: " + edge.getDestination());
+                            if (!hasPlacedModules.contains(edge.getDestination())) {
+                                System.out.println("edge.destination:  " + edge.getDestination());
                                 int ran = random.nextInt(max - min + 1);
                                 int place2 = min + ran;
                                 //int place2 = (int)(min+Math.random()*(max-min));
@@ -160,19 +185,21 @@ public class PlaceMappingGenerted extends ModulePlacement{
                                     min = temp;
                                 }
                                 de2place.add(devices.get(place2).getId());
+                                hasPlacedModules.add(edge.getDestination());
                             }
                         }
                         modulemap.put(sen.getId(), de2place);
+                        //sSystem.out.println("de2place  " + de2place);
                         min = 0;
                     }
 
                 }
             }//}
             result1.put(app.getAppId(), modulemap);
-
+            //System.out.println("result:  " + result1);
         }
 
-        System.out.println("devices : ");
+        //System.out.println("devices : ");
         for(FogDevice device : devices){
             System.out.print(device.getId() + "  ");
         }
@@ -197,7 +224,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
      */
     private Map<String, Integer> getAssociatedActuators(FogDevice device) {
         Map<String, Integer> endpoints = new HashMap<String, Integer>();
+        //System.out.println("actuators num : " + getActuators().size());
         for(Actuator actuator : getActuators()){
+            //System.out.println("actuator.tupleType:  " + actuator.getActuatorType());
             if(actuator.getGatewayDeviceId()==device.getId()){
                 if(!endpoints.containsKey(actuator.getActuatorType()))
                     endpoints.put(actuator.getActuatorType(), 0);
@@ -215,6 +244,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 if(!sensorsAssociated.containsKey(sensor.getTupleType()))
                     sensorsAssociated.put(sensor.getTupleType(), 0);
                 sensorsAssociated.put(sensor.getTupleType(), sensorsAssociated.get(sensor.getTupleType()+1));
+               // System.out.println("sensor.tupleType:  " + sensor.getTupleType());
                 result.add(sensor);
             }
         }
