@@ -261,6 +261,7 @@ public class Application {
 									inputTuple.getUtilizationModelBw()
 									);
 							tuple.setActualTupleId(inputTuple.getActualTupleId());
+							tuple.setAcutualsource(inputTuple.getAcutualsource());
 							tuple.setUserId(inputTuple.getUserId());
 							tuple.setAppId(inputTuple.getAppId());
 							tuple.setDestModuleName(edge.getDestination());

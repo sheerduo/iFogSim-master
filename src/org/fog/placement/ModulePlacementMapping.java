@@ -18,7 +18,6 @@ public class ModulePlacementMapping extends ModulePlacement{
 		for(String deviceName : mapping.keySet()){
 			FogDevice device = getDeviceByName(deviceName);
 			for(String moduleName : mapping.get(deviceName)){
-				
 				AppModule module = getApplication().getModuleByName(moduleName);
 				if(module == null)
 					continue;
