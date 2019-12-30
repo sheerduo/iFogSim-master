@@ -558,6 +558,10 @@ public class CloudSim {
 	 * Internal method used to stop the simulation. This method should <b>not</b> be used directly.
 	 */
 	public static void runStop() {
+		running=false;
+		future.clear();
+		deferred.clear();
+		waitPredicates.clear();
 		printMessage("Simulation completed.");
 	}
 
@@ -812,6 +816,7 @@ public class CloudSim {
 	public static void runStart() {
 		running = true;
 		// Start all the entities
+		System.out.println("Entities started.");
 		for (SimEntity ent : entities) {
 			ent.startEntity();
 		}
@@ -935,14 +940,14 @@ public class CloudSim {
 
 		// reset all static variables
 		// Private data members
-		entities = null;
-		entitiesByName = null;
-		future = null;
-		deferred = null;
+		//entities = null;
+		//entitiesByName = null;
+		future .clear();
+		deferred .clear();
 		clock = 0L;
 		running = false;
 
-		waitPredicates = null;
+		waitPredicates .clear();
 		paused = false;
 		pauseAt = -1;
 		abruptTerminate = false;

@@ -923,7 +923,7 @@ public class FogDevice extends PowerDatacenter {
         //System.out.println(getName() + "   " + module.getName() + "   " + module.getUid());
         Pair<String, Integer> pair = new Pair<String, Integer>(module.getName(), module.getLevel());
         moduleNameToId.put(module.getUid(), pair);
-        System.out.println(getName() + "   "+ moduleNameToId);
+        //System.out.println(getName() + "   "+ moduleNameToId);
         appToModulesMap.get(appId).add(module.getName());
         processVmCreate(ev, false);
         if (module.isBeingInstantiated()) {
@@ -1681,7 +1681,12 @@ public class FogDevice extends PowerDatacenter {
     }
 
     public void setSensorModuleChaineMap(Map<Integer, Map<String, Integer>> sensorModuleChaineMap) {
-        this.sensorModuleChaineMap = sensorModuleChaineMap;
+        this.sensorModuleChaineMap.putAll(sensorModuleChaineMap);
         //System.out.println(this.getName() + "  :  sensorModuleChaineMap:  " + sensorModuleChaineMap);
+    }
+
+    public void clearTupleFromNeighbor(){
+        this.tupleFromNeighbor.clear();
+        getHost().getVmScheduler().deallocatePesForAllVms();
     }
 }

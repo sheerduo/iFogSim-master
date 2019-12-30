@@ -1,6 +1,7 @@
 package org.fog.entities;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -30,6 +31,7 @@ public class Sensor extends SimEntity{
 	private int controllerId;
 	private Application app;
 	private double latency;
+	private Map<String, Integer> chainMap;
 	
 	public Sensor(String name, int userId, String appId, int gatewayDeviceId, double latency, GeoLocation geoLocation, 
 			Distribution transmitDistribution, int cpuLength, int nwLength, String tupleType, String destModuleName) {
@@ -98,6 +100,8 @@ public class Sensor extends SimEntity{
 		tuple.setSrcModuleName(getSensorName());
 		tuple.setDeadline(deadline);
 		tuple.setLevel(level);
+		tuple.setSourceSensor(this.getId());
+		tuple.setChainMap(this.getChainMap());
 		Logger.debug(getName(), "Sending tuple with tupleId = "+tuple.getCloudletId());
 
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
@@ -235,4 +239,11 @@ public class Sensor extends SimEntity{
 		this.latency = latency;
 	}
 
+	public Map<String, Integer> getChainMap() {
+		return chainMap;
+	}
+
+	public void setChainMap(Map<String, Integer> chainMap) {
+		this.chainMap = chainMap;
+	}
 }

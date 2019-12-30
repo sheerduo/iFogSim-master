@@ -272,6 +272,8 @@ public class Application {
 							tuple.setSourceModuleId(sourceModuleId);
 							tuple.setDeadline(edge.getDeadline());
 							tuple.setLevel(edge.getLevel());
+							tuple.setSourceSensor(inputTuple.getSourceSensor());
+							tuple.setChainMap(inputTuple.getChainMap());
 							//tuple.setActuatorId(actuatorId);
 							//System.out.println(tuple.getDestModuleName());
 							tuples.add(tuple);
@@ -297,6 +299,9 @@ public class Application {
 						tuple.setSourceModuleId(sourceModuleId);
 						tuple.setDeadline(edge.getDeadline());
 						tuple.setLevel(edge.getLevel());
+						tuple.setChainMap(inputTuple.getChainMap());
+						int sourceSensor = inputTuple.getSourceSensor();
+						tuple.setSourceSensor(sourceSensor);
 						tuples.add(tuple);
 
 						//System.err.println("i'm used     " + tuple.getTupleType()+ "   11111111111");

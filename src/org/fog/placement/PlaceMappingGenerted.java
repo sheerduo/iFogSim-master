@@ -107,14 +107,20 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 }
                 numOfApp++;
             }
+
             for(FogDevice device : area.getArea()){
-                device.setSensorModuleChaineMap(sensorModuleChaineMap);
+                List<Sensor> sensors = sensorsOfDevcie.get(device.getId());
+                for(Sensor sensor1 : sensors){
+                    //System.out.println(sensor1.getId() + "  " + sensorModuleChaineMap.get(sensor1.getId()));
+                    sensor1.setChainMap(sensorModuleChaineMap.get(sensor1.getId()));
+                }
+                //device.setSensorModuleChaineMap(sensorModuleChaineMap);
             }
         }
-        /*System.out.println("modulemapping:  ");
+        System.out.println("modulemapping:  ");
         for(int i=0; i<2;i++){
             System.out.println(moduleMappingList.get(i).moduleMapping);
-        }*/
+        }
         //mapModules();
         List<ModulePlacement> modulePlacementList = new ArrayList<>();
        // ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(0), moduleMappingList.get(0));

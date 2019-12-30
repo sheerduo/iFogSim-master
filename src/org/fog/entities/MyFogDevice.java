@@ -13,6 +13,7 @@ import org.fog.utils.TimeKeeper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyFogDevice extends FogDevice{
 
@@ -141,28 +142,43 @@ public class MyFogDevice extends FogDevice{
     protected boolean canBeProcessedBySelf(SimEvent ev) {
         boolean result = false;
         Tuple tuple = (Tuple)ev.getData();
-        int sourceSensor = tuple.getSourceSensor();
+        if(tuple.getDirection() == Tuple.ACTUATOR || tuple.getDirection() == Tuple.DOWN ){
+            sendTupleToActuator(tuple);
+            return false;
+        }
+        Map<String, Integer> chainMap = tuple.getChainMap();
+        int targetDevice = chainMap.get(tuple.getDestModuleName());
+       /* int sourceSensor = tuple.getSourceSensor();
         String moduleName = tuple.getDestModuleName();
-        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
-        if(toDevcieId==this.getId()){
+        //System.out.println(this.getId() + "  sourceSensor:  " + sourceSensor + " moduleName  " + moduleName + " tuple.direction " + tuple.getDirection() + "  sensorModuleChainMap  " + sensorModuleChaineMap);
+        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);*/
+        if(targetDevice==this.getId()){
             processTupleArrival(ev);
             return true;
         }
-        sendNeighbor(tuple, toDevcieId);
+        sendNeighbor(tuple, targetDevice);
         return false;
     }
 
     protected boolean canBeProcessedBySelf(Tuple tuple){
-        int sourceSensor = tuple.getSourceSensor();
+        //int sourceSensor = tuple.getSourceSensor();
         String moduleName = tuple.getDestModuleName();
-        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
-        if(toDevcieId==this.getId()){
-            updateTimingsOnSending(tuple);
-            sendToSelf(tuple);
-            return true;
+        //System.out.println(this.getId() + "  sourceSensor:  " + sourceSensor + " moduleName  " + moduleName + "  sensorModuleChainMap  " + sensorModuleChaineMap);
+        Map<String, Integer> map = tuple.getChainMap();
+        if(map.keySet().contains(moduleName)) {
+            int toDevcieId = map.get(moduleName);
+            if (toDevcieId == this.getId()) {
+                updateTimingsOnSending(tuple);
+                sendToSelf(tuple);
+                return true;
+            }
+            sendNeighbor(tuple, toDevcieId);
+            return false;
+        }else {
+            int actualId = tuple.getAcutualsource();
+            sendNeighbor(tuple, actualId);
+            return false;
         }
-        sendNeighbor(tuple, toDevcieId);
-        return false;
     }
 
     @Override

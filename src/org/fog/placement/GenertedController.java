@@ -13,11 +13,13 @@ import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
 public class GenertedController extends Controller {
 
+    private int num = 0;
     private PlaceMappingGenerted placeMappingGenerted;
     private List<Application> apps ;
     Map<String, ModuleMapping> moduleMappings;
@@ -44,8 +46,8 @@ public class GenertedController extends Controller {
 
         send(getId(), Config.RESOURCE_MANAGE_INTERVAL, FogEvents.CONTROLLER_RESOURCE_MANAGE);
 
-        send(getId(), Config.PRE_SIMULATION_TIME, FogEvents.STOP_SIMULATION);
-
+        send(getId(),  Config.PRE_SIMULATION_TIME, FogEvents.STOP_GENERTED_SIMULATION);
+        System.out.println("重新开始过");
         for(FogDevice dev : getFogDevices())
             sendNow(dev.getId(), FogEvents.RESOURCE_MGMT);
     }
@@ -55,9 +57,22 @@ public class GenertedController extends Controller {
         switch(ev.getTag()){
             case FogEvents.STOP_GENERTED_SIMULATION:
                 CloudSim.stopSimulation();
+
+                double value = valuePlacement();
                 clearDeviceAppMap();
-                System.exit(0);
-                break;
+                if(num++<10) {
+                    List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
+                    for(int i=0;i<mapList.size();i++){
+                        submitApplication(apps.get(i), mapList.get(i));
+                    }
+                    /*int num_user = 1; // number of cloud users
+                    Calendar calendar = Calendar.getInstance();
+                    boolean trace_flag = false; // mean trace events
+                    CloudSim.init(num_user, calendar, trace_flag);*/
+                    CloudSim.startSimulation();
+                }
+               // System.exit(0);
+                //break;
         }
     }
 
@@ -70,7 +85,12 @@ public class GenertedController extends Controller {
     }
 
     public void SA_method(double tem,int T,int N,double q) {
-        //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
+        List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
+        for(int i=0;i<mapList.size();i++){
+            submitApplication(apps.get(i), mapList.get(i));
+        }
+        CloudSim.startSimulation();
+      /*  //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
         int K=0;
         int Loop;
         int count=0;//记录随机变差过程中的接受次数
@@ -80,9 +100,12 @@ public class GenertedController extends Controller {
             while(Loop<N) {
                 //device 清空
 
-                placeMappingGenerted.generted();//产生新的邻域解
+                List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
+                for(int i=0;i<mapList.size();i++){
+                    submitApplication(apps.get(i), mapList.get(i));
+                }
                 CloudSim.startSimulation();
-                CloudSim.stopSimulation();
+                //CloudSim.stopSimulation();
                 double value = valuePlacement();
                 if (value - best < 0) {
                     if(Math.exp(0-(value/tem))>Math.random()) {
@@ -102,7 +125,7 @@ public class GenertedController extends Controller {
                     //TODO
                 }
             }
-        }
+        }*/
     }
 
     /**
@@ -112,7 +135,7 @@ public class GenertedController extends Controller {
     public double valuePlacement(){
 
         double value = 0.0;
-      //  System.out.println("used  " + TimeKeeper.getInstance().getLoopIdToTupleIds().keySet().size());
+        //System.out.println("used  " + TimeKeeper.getInstance().getLoopIdToTupleIds().keySet().size());
         for(Integer loopId : TimeKeeper.getInstance().getLoopIdToTupleIds().keySet()){
             double value1 = TimeKeeper.getInstance().getLoopIdToCurrentAverage().get(loopId);
             value+=value1;
@@ -126,6 +149,7 @@ public class GenertedController extends Controller {
     private void clearDeviceAppMap(){
         for(FogDevice d : fogDevices){
             d.clearAppToModuleMap();
+            d.clearTupleFromNeighbor();
         }
     }
 

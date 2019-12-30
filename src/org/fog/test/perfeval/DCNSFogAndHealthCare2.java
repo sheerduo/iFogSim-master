@@ -73,8 +73,8 @@ public class DCNSFogAndHealthCare2 {
             mappings.put(application_d.getAppId(), moduleMapping_d);
             mappings.put(application_h.getAppId(), moduleMapping_h);
 
-            PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
-            placeMappingGenerted.generted();
+          /*  PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
+            placeMappingGenerted.generted();*/
             for(FogDevice device : fogDevices){
                 if(device.getName().startsWith("md")){
                     moduleMapping_d.addModuleToDevice("motion_detector", device.getName());  // fixing all instances of the Client module to the Smartphones
@@ -242,14 +242,14 @@ public class DCNSFogAndHealthCare2 {
     }
 
     private static FogDevice addMobile_D(String id, int parentId){
-        FogDevice mobile = createFogDevice("md-"+id, 500, 1000, 10000, 270, 3, 0, 87.53, 82.44);
+        FogDevice mobile = createFogDevice("md-"+id, 5000, 1000, 10000, 270, 3, 0, 87.53, 82.44);
         mobile.setParentId(parentId);
         mobiles_D.add(mobile);
         return mobile;
     }
 
     private static FogDevice addMobile_H(String id, int parentId){
-        FogDevice mobile = createFogDevice("mh-"+id, 500, 2048, 10000, 270, 3, 0, 87.53, 82.44);
+        FogDevice mobile = createFogDevice("mh-"+id, 5000, 2048, 10000, 270, 3, 0, 87.53, 82.44);
         mobile.setParentId(parentId);
         mobiles_H.add(mobile);
         return mobile;
