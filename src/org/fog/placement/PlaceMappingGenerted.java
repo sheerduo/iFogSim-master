@@ -111,10 +111,10 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 device.setSensorModuleChaineMap(sensorModuleChaineMap);
             }
         }
-        System.out.println("modulemapping:  ");
+        /*System.out.println("modulemapping:  ");
         for(int i=0; i<2;i++){
             System.out.println(moduleMappingList.get(i).moduleMapping);
-        }
+        }*/
         //mapModules();
         List<ModulePlacement> modulePlacementList = new ArrayList<>();
        // ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(0), moduleMappingList.get(0));
@@ -150,7 +150,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
         //将Area内以及上级的device都纳入范围
         while(flag){
             dd = getDeviceById(dd.getParentId());
-            System.out.println(dd.getName());
+            //System.out.println(dd.getName());
             if(dd.getName().equals("cloud")){//向上寻找所有上级device
                 flag = false;
             }
@@ -207,10 +207,10 @@ public class PlaceMappingGenerted extends ModulePlacement{
         }
 
         //System.out.println("devices : ");
-        for(FogDevice device : devices){
+       /* for(FogDevice device : devices){
             System.out.print(device.getId() + "  ");
-        }
-        System.out.println( "generted mapping" + result1);
+        }*/
+        //System.out.println( "generted mapping" + result1);
 
 
         return result1;

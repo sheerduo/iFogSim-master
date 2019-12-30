@@ -1,5 +1,6 @@
 package org.fog.placement;
 
+import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.Application;
@@ -28,7 +29,8 @@ public class GenertedController extends Controller {
     }
 
     public void startGenerted(){
-        CloudSim.startSimulation();
+        //CloudSim.startSimulation();
+        SA_method(20000, 5000, 50, 0.9);
     }
 
     @Override
@@ -77,7 +79,10 @@ public class GenertedController extends Controller {
             Loop=0;
             while(Loop<N) {
                 //device 清空
+
                 placeMappingGenerted.generted();//产生新的邻域解
+                CloudSim.startSimulation();
+                CloudSim.stopSimulation();
                 double value = valuePlacement();
                 if (value - best < 0) {
                     if(Math.exp(0-(value/tem))>Math.random()) {
@@ -107,10 +112,13 @@ public class GenertedController extends Controller {
     public double valuePlacement(){
 
         double value = 0.0;
+      //  System.out.println("used  " + TimeKeeper.getInstance().getLoopIdToTupleIds().keySet().size());
         for(Integer loopId : TimeKeeper.getInstance().getLoopIdToTupleIds().keySet()){
             double value1 = TimeKeeper.getInstance().getLoopIdToCurrentAverage().get(loopId);
             value+=value1;
             System.out.println(getStringForLoopId(loopId) + " ---> "+value1 + " nums: " + TimeKeeper.getInstance().getLoopIdToCurrentNum().get(loopId));
+            TimeKeeper.getInstance().getLoopIdToCurrentAverage().put(loopId, 0.0);
+            TimeKeeper.getInstance().getLoopIdToCurrentNum().put(loopId, 0);
         }
         return value;
     }

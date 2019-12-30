@@ -1682,6 +1682,6 @@ public class FogDevice extends PowerDatacenter {
 
     public void setSensorModuleChaineMap(Map<Integer, Map<String, Integer>> sensorModuleChaineMap) {
         this.sensorModuleChaineMap = sensorModuleChaineMap;
-        System.out.println(this.getName() + "  :  sensorModuleChaineMap:  " + sensorModuleChaineMap);
+        //System.out.println(this.getName() + "  :  sensorModuleChaineMap:  " + sensorModuleChaineMap);
     }
 }

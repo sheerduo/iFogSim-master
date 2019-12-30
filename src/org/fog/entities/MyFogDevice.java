@@ -1,19 +1,20 @@
 package org.fog.entities;
 
-import org.cloudbus.cloudsim.Storage;
-import org.cloudbus.cloudsim.VmAllocationPolicy;
+import org.apache.commons.math3.util.Pair;
+import org.cloudbus.cloudsim.*;
+import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
+import org.fog.application.AppModule;
+import org.fog.application.Application;
 import org.fog.utils.FogEvents;
+import org.fog.utils.Logger;
+import org.fog.utils.TimeKeeper;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MyFogDevice extends FogDevice{
-
-
-
-    //private Map<Integer, List<Integer>> sensorModuleMap;
 
     public MyFogDevice(
             String name,
@@ -84,11 +85,57 @@ public class MyFogDevice extends FogDevice{
         }
     }
 
-
     /*
     **更改checkFinished
     * source 需要改变？？  先这么写了
      */
+
+    @Override
+    protected void checkCloudletCompletion() {
+        boolean cloudletCompleted = false;
+        List<? extends Host> list = getVmAllocationPolicy().getHostList();
+        for (int i = 0; i < list.size(); i++) {
+            Host host = list.get(i);
+            for (Vm vm : host.getVmList()) {
+                while (vm.getCloudletScheduler().isFinishedCloudlets()) {
+                    Cloudlet cl = vm.getCloudletScheduler().getNextFinishedCloudlet();
+                    if (cl != null) {
+                        for(Pair<Integer,Integer> pair: tupleExecuting){
+                            if(pair.getSecond()==cl.getCloudletId()){
+                                tupleExecuting.remove(pair);
+                                break;
+                            }
+                        }
+                        cloudletCompleted = true;
+                        Tuple tuple = (Tuple)cl;
+                        if(moduleNums.containsKey(tuple.getDestModuleName())){
+                            int num = moduleNums.get(tuple.getDestModuleName());
+                            moduleNums.put(tuple.getDestModuleName(), num-1);
+                            tasknum--;
+                        }
+                        double executeTime = TimeKeeper.getInstance().tupleEndedExecution(tuple);
+                        try{
+                            out.write(tuple.getDestModuleName()+ ":" + executeTime + "\r\n");
+                            out.flush();
+                        }catch (IOException ex){
+
+                        }
+                        Application application = getApplicationMap().get(tuple.getAppId());
+                        Logger.debug(getName(), "Completed execution of tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
+                        List<Tuple> resultantTuples = application.getResultantTuples(tuple.getDestModuleName(), tuple, getId(), vm.getId());
+                        for(Tuple resTuple : resultantTuples){
+                            resTuple.setModuleCopyMap(new HashMap<String, Integer>(tuple.getModuleCopyMap()));
+                            resTuple.getModuleCopyMap().put(((AppModule)vm).getName(), vm.getId());
+                            canBeProcessedBySelf(resTuple);
+                        }
+                        sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
+                    }
+                }
+            }
+        }
+        if(cloudletCompleted)
+            updateAllocatedMips(null);
+    }
 
     @Override
     protected boolean canBeProcessedBySelf(SimEvent ev) {
@@ -105,14 +152,25 @@ public class MyFogDevice extends FogDevice{
         return false;
     }
 
-    /**
-     * 解析sensorModuleMap  放在上一层？？
-     * @param sensorModuleMap
-     */
-    /*@Override
-    public void setSensorModuleMap(Map<String, Map<Integer, List<Integer>>> sensorModuleMap) {  //
-        //super.setSensorModuleMap(sensorModuleMap);
+    protected boolean canBeProcessedBySelf(Tuple tuple){
+        int sourceSensor = tuple.getSourceSensor();
+        String moduleName = tuple.getDestModuleName();
+        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
+        if(toDevcieId==this.getId()){
+            updateTimingsOnSending(tuple);
+            sendToSelf(tuple);
+            return true;
+        }
+        sendNeighbor(tuple, toDevcieId);
+        return false;
+    }
 
-
-    }*/
+    @Override
+    protected void processTupleFromNeighbor(SimEvent ev) {
+        Tuple tuple = (Tuple)ev.getData();
+        int tupleNeighborid=ev.getSource();
+        int cloudletId = ((Tuple)ev.getData()).getCloudletId();
+        tupleFromNeighbor.add(new Pair<>(cloudletId, tuple.getAcutualsource()));
+        processTupleArrival(ev);
+    }
 }
