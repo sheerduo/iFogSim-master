@@ -8,6 +8,8 @@ import org.fog.entities.Actuator;
 import org.fog.entities.AreaOfDevice;
 import org.fog.entities.FogDevice;
 import org.fog.entities.Sensor;
+import org.fog.test.perfeval.test3;
+import org.fog.utils.BestResult;
 import org.fog.utils.Config;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
@@ -19,15 +21,22 @@ import java.util.Map;
 
 public class GenertedController extends Controller {
 
+    public test3 App = new test3();
+
     private int num = 0;
     private PlaceMappingGenerted placeMappingGenerted;
     private List<Application> apps ;
+
     Map<String, ModuleMapping> moduleMappings;
     List<AreaOfDevice> areas;
     public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
         super(name, fogDevices, sensors, actuators);
         this.apps = apps;
         placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators ,apps, moduleMappings, areas);
+    }
+
+    public void initController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
+
     }
 
     public void startGenerted(){
@@ -57,20 +66,25 @@ public class GenertedController extends Controller {
         switch(ev.getTag()){
             case FogEvents.STOP_GENERTED_SIMULATION:
                 CloudSim.stopSimulation();
-
                 double value = valuePlacement();
+                BestResult.setCurrentValue(value);
+                if(BestResult.getBestVaule() > value){
+                    BestResult.setBestVaule(value);
+                }
+                System.out.println("the best value : " + BestResult.getBestVaule() + "  current value :" + value);
                 clearDeviceAppMap();
-                if(num++<10) {
+               // CloudSim.finishSimulation();
+                /*if(num>=0) {
                     List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
                     for(int i=0;i<mapList.size();i++){
                         submitApplication(apps.get(i), mapList.get(i));
                     }
-                    /*int num_user = 1; // number of cloud users
+                    *//*int num_user = 1; // number of cloud users
                     Calendar calendar = Calendar.getInstance();
                     boolean trace_flag = false; // mean trace events
-                    CloudSim.init(num_user, calendar, trace_flag);*/
-                    CloudSim.startSimulation();
-                }
+                    CloudSim.init(num_user, calendar, trace_flag);*//*
+                    CloudSim.finishSimulation();
+                }*/
                // System.exit(0);
                 //break;
         }

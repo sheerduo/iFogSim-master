@@ -123,6 +123,7 @@ public class MyFogDevice extends FogDevice{
                         }
                         Application application = getApplicationMap().get(tuple.getAppId());
                         Logger.debug(getName(), "Completed execution of tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
+                        //System.out.println(getName() + "  Completed execution of tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
                         List<Tuple> resultantTuples = application.getResultantTuples(tuple.getDestModuleName(), tuple, getId(), vm.getId());
                         for(Tuple resTuple : resultantTuples){
                             resTuple.setModuleCopyMap(new HashMap<String, Integer>(tuple.getModuleCopyMap()));
@@ -148,10 +149,11 @@ public class MyFogDevice extends FogDevice{
         }
         Map<String, Integer> chainMap = tuple.getChainMap();
         int targetDevice = chainMap.get(tuple.getDestModuleName());
-       /* int sourceSensor = tuple.getSourceSensor();
-        String moduleName = tuple.getDestModuleName();
+
+    /*    int sourceSensor = tuple.getSourceSensor();
+        String moduleName = tuple.getDestModuleName();*/
         //System.out.println(this.getId() + "  sourceSensor:  " + sourceSensor + " moduleName  " + moduleName + " tuple.direction " + tuple.getDirection() + "  sensorModuleChainMap  " + sensorModuleChaineMap);
-        int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);*/
+       // int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
         if(targetDevice==this.getId()){
             processTupleArrival(ev);
             return true;

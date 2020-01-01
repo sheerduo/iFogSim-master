@@ -22,13 +22,29 @@ public class TimeKeeper {
 	
 	private Map<Integer, Double> loopIdToCurrentAverage;
 	private Map<Integer, Integer> loopIdToCurrentNum;
+
+
 	
 	public static TimeKeeper getInstance(){
 		if(instance == null)
 			instance = new TimeKeeper();
 		return instance;
 	}
-	
+
+	public  void init(){
+
+		tupleTypeToExecutedTupleCount.clear();
+		tupleTypeToAverageCpuTime.clear();
+		tupleIdToCpuStartTime.clear();
+		loopIdToTupleIds.clear();
+		loopIdToCurrentNum.clear();
+		loopIdToCurrentAverage.clear();
+		simulationStartTime=0;
+		count=0;
+		emitTimes.clear();
+		endTimes.clear();
+	}
+
 	public int getUniqueId(){
 		return count++;
 	}

@@ -14,7 +14,8 @@ import org.fog.application.AppLoop;
 import org.fog.application.Application;
 import org.fog.application.selectivity.FractionalSelectivity;
 import org.fog.entities.*;
-import org.fog.placement.*;
+import org.fog.placement.GenertedController;
+import org.fog.placement.ModuleMapping;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
@@ -25,7 +26,7 @@ import org.fog.utils.distribution.DeterministicDistribution;
 
 import java.util.*;
 
-public class test2 {
+public class test3 {
     static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_D = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_H = new ArrayList<FogDevice>();
@@ -37,67 +38,63 @@ public class test2 {
 
     private static List<AreaOfDevice> areas = new ArrayList<AreaOfDevice>();
 
+    static int sensorNum = 0;
     public static void main(String[] args) {
+        Log.disable();
 
-        Log.printLine("Starting TwoApps...");
-
-        try {
-            Log.disable();
+        int i = 0;
+        while (i++<100){
             int num_user = 1; // number of cloud users
             Calendar calendar = Calendar.getInstance();
             boolean trace_flag = false; // mean trace events
 
             CloudSim.init(num_user, calendar, trace_flag);
-
-            String appId0 = "DCNSFog";
-            String appId1 = "HealthCareSystem";
-
-            FogBroker broker0 = new FogBroker("broker_0");
-            FogBroker broker1 = new FogBroker("broker_1");
-
-            Application application_d = createApplication1(appId0, broker0.getId());
-            Application application_h = createApplication2(appId1, broker1.getId());
-
-            createFogDevices();
-
-            createDCNSDevices(broker0.getId(), appId0);
-            createHealthCareDevices(broker1.getId(),appId1);
-
-            ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
-            ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
-
-            List<Application> apps = new ArrayList<>();
-            apps.add(application_d);
-            apps.add(application_h);
-            Map<String, ModuleMapping> mappings = new HashMap<>();
-            mappings.put(application_d.getAppId(), moduleMapping_d);
-            mappings.put(application_h.getAppId(), moduleMapping_h);
-
-          /*  PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
-            placeMappingGenerted.generted();*/
-            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
-            TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
-            genertedController.startGenerted();
-          /*  Controller controller = null;
-            controller = new Controller("master-controller", fogDevices, sensors,
-                    actuators);
-            controller.submitApplication(application_d,new ModulePlacementMapping(fogDevices, application_d, moduleMapping_d));
-            controller.submitApplication(application_h,new ModulePlacementMapping(fogDevices, application_h, moduleMapping_h));
-            *//*controller.submitApplication(application_d,new ModulePlacementEdgewards(fogDevices, sensors, actuators, application_d, moduleMapping_d));
-            controller.submitApplication(application_h,new ModulePlacementEdgewards(fogDevices, sensors, actuators, application_h, moduleMapping_h));*//*
-*/
-
-/*
-            CloudSim.startSimulation();
-
-            CloudSim.stopSimulation();*/
-
-        }catch (Exception e) {
-            e.printStackTrace();
-            Log.printLine("Unwanted errors happen");
+            System.out.println("这是 i   " + i);
+            appInit();
         }
+        System.exit(0);
+
     }
 
+    public static void appInit(){
+       try {
+           FogUtils.initFogUtils();
+           fogDevices.clear();
+           mobiles_D.clear();
+           mobiles_H.clear();
+           sensors.clear();
+           actuators.clear();
+           TimeKeeper.getInstance().init();
+           String appId0 = "DCNSFog";
+           String appId1 = "HealthCareSystem";
+
+           FogBroker broker0 = new FogBroker("broker_0");
+           FogBroker broker1 = new FogBroker("broker_1");
+
+           Application application_d = createApplication1(appId0, broker0.getId());
+           Application application_h = createApplication2(appId1, broker1.getId());
+
+           createFogDevices();
+
+           createDCNSDevices(broker0.getId(), appId0);
+           createHealthCareDevices(broker1.getId(), appId1);
+
+           ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
+           ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
+
+           List<Application> apps = new ArrayList<>();
+           apps.add(application_d);
+           apps.add(application_h);
+           Map<String, ModuleMapping> mappings = new HashMap<>();
+           mappings.put(application_d.getAppId(), moduleMapping_d);
+           mappings.put(application_h.getAppId(), moduleMapping_h);
+           GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
+           TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
+           genertedController.startGenerted();
+       }catch (Exception e){
+
+       }
+    }
 
     private static void createFogDevices() {
         FogDevice cloud = createFogDevice("cloud", 44800, 40000, 100, 10000, 0, 0.01, 16*103, 16*83.25); // creates the fog device Cloud at the apex of the hierarchy with level=0
@@ -365,4 +362,5 @@ public class test2 {
 
 
 }
+
 

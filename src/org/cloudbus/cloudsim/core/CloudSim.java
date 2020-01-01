@@ -479,9 +479,13 @@ public class CloudSim {
 		}
 		if (e.getId() == -1) { // Only add once!
 			int id = entities.size();
+			/*if(entities.size()>70){
+				System.err.println(e.getName() + "  超范围了  " + entities.size());
+			}*/
 			e.setId(id);
 			entities.add(e);
 			entitiesByName.put(e.getName(), e);
+			//System.err.println(e.getName() + "  :    " + e.getId());
 		}
 	}
 
@@ -562,6 +566,7 @@ public class CloudSim {
 		future.clear();
 		deferred.clear();
 		waitPredicates.clear();
+		clock=0.0;
 		printMessage("Simulation completed.");
 	}
 
@@ -816,7 +821,7 @@ public class CloudSim {
 	public static void runStart() {
 		running = true;
 		// Start all the entities
-		System.out.println("Entities started.");
+		System.out.println("Entities started. entities num" + entities.size());
 		for (SimEntity ent : entities) {
 			ent.startEntity();
 		}
@@ -948,6 +953,9 @@ public class CloudSim {
 		running = false;
 
 		waitPredicates .clear();
+		System.out.println("CloudSim entities cleared 用过");
+		entities.clear();
+		entitiesByName.clear();
 		paused = false;
 		pauseAt = -1;
 		abruptTerminate = false;
