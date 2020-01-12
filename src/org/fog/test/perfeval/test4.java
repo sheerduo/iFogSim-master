@@ -42,8 +42,8 @@ public class test4 {
         Log.disable();
 
         double tem = 20000;
-        int T = 1;
-        int N = 1;
+        int T = 5000;
+        int N = 50;
         double q = 0.9;
 
 

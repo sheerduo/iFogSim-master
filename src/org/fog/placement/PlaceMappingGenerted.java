@@ -45,13 +45,17 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 if(!sensorsOfDevcie.containsKey(dev.getId())){
                     sensorsOfDevcie.put(dev.getId(), new ArrayList<>());
                 }
+                System.out.println(dev.getName() + " child  " + dev.getChildrenIds());
+                List<Sensor> sens = new ArrayList<>();
                 for(Integer decId : dev.getChildrenIds()){
-                    List<Sensor> sens = getAssociatedSensors(getFogDeviceById(decId));
-                    System.out.println("列表：  " + sens);
+                    sens.addAll(getAssociatedSensors(getFogDeviceById(decId)));
                     sensorsOfDevcie.put(dev.getId(), sens);
                 }
-                System.out.println("列表：  " + sensorsOfDevcie);
-
+                //System.out.println("列表：  " + sensorsOfDevcie);
+                List<Sensor> ssss = sensorsOfDevcie.get(6);
+               // for(Sensor s : ssss){
+                    ///System.out.println("6666  " + ssss.size());
+                //}
             }
            // genertedPlacement(area, 0);
         }
@@ -77,8 +81,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
             for(FogDevice device : area.getArea()) {
                 //System.out.println("2222");
                 //FogDevice device = getFogDeviceById(deviceId);
-                getAssociatedSensors(device);  //返回不同类型的sensor
-                sensorsOfDevcie.put(device.getId(), getAssociatedSensors(device));
+                //getAssociatedSensors(device);  //返回不同类型的sensor
+                //sensorsOfDevcie.put(device.getId(), getAssociatedSensors(device));
                 actuatorsAssociated = getAssociatedActuators(device);
                 placedModules.addAll(sensorsAssociated.keySet()); // ADDING ALL SENSORS TO PLACED LIST
                 placedModules.addAll(actuatorsAssociated.keySet()); // ADDING ALL ACTUATORS TO PLACED LIST
@@ -183,7 +187,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
             Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
             for(FogDevice de: area.getArea()) {
                 List<Sensor> sensorOfde = sensorsOfDevcie.get(de.getId());
-                System.out.println("sensor size: " + sensorOfde);
+                //System.out.println(de.getId() + "  sensor size: " + sensorOfde);
                 for (Sensor sen : sensorOfde) {
 
                     if (sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
@@ -191,7 +195,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         int numOfArea = area.getArea().size();
                         int mid = numOfArea;
                         int temp = mid;
-                        System.out.println("area size: " + numOfArea);
+                       // System.out.println("area size: " + numOfArea);
                         List<String> hasPlacedModules = new ArrayList<>();
                         for(String ss : placedModules){
                             hasPlacedModules.add(ss);
@@ -266,14 +270,15 @@ public class PlaceMappingGenerted extends ModulePlacement{
         for(Sensor sensor : getSensors()){
             //System.out.println("这是decId  " + sensor.getId());
             if(sensor.getGatewayDeviceId()==device.getId()){
-                if(!sensorsAssociated.containsKey(sensor.getTupleType()))
+                if(!sensorsAssociated.containsKey(sensor.getTupleType())) {
                     sensorsAssociated.put(sensor.getTupleType(), 0);
+                }
                 sensorsAssociated.put(sensor.getTupleType(), sensorsAssociated.get(sensor.getTupleType()+1));
-               // System.out.println("sensor.tupleType:  " + sensor.getTupleType());
+                System.out.println("sensor.tupleType:  " + sensor.getTupleType());
                 result.add(sensor);
             }
         }
-        System.out.println("result大小  " + result.size());
+        System.out.println(device.getId() +  " result大小  " + result.size());
         return result;
     }
 
