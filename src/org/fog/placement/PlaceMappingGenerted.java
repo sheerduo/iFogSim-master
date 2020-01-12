@@ -45,8 +45,13 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 if(!sensorsOfDevcie.containsKey(dev.getId())){
                     sensorsOfDevcie.put(dev.getId(), new ArrayList<>());
                 }
-                List<Sensor> sens = getAssociatedSensors(dev);
-                sensorsOfDevcie.put(dev.getId(), sens);
+                for(Integer decId : dev.getChildrenIds()){
+                    List<Sensor> sens = getAssociatedSensors(getFogDeviceById(decId));
+                    System.out.println("列表：  " + sens);
+                    sensorsOfDevcie.put(dev.getId(), sens);
+                }
+                System.out.println("列表：  " + sensorsOfDevcie);
+
             }
            // genertedPlacement(area, 0);
         }
@@ -65,8 +70,12 @@ public class PlaceMappingGenerted extends ModulePlacement{
             ModuleMapping moduleMapping1 = ModuleMapping.createModuleMapping();
             moduleMappingList.add(moduleMapping1);
         }
+        //System.out.println("0000随多少 " );
         for(AreaOfDevice  area : areas){
+            //System.out.println("11111 " + area.getArea().size());
+
             for(FogDevice device : area.getArea()) {
+                //System.out.println("2222");
                 //FogDevice device = getFogDeviceById(deviceId);
                 getAssociatedSensors(device);  //返回不同类型的sensor
                 sensorsOfDevcie.put(device.getId(), getAssociatedSensors(device));
@@ -156,7 +165,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
         //将Area内以及上级的device都纳入范围
         while(flag){
             dd = getDeviceById(dd.getParentId());
-            //System.out.println(dd.getName());
+            //System.out.println("begin div   " + dd.getName());
             if(dd.getName().equals("cloud")){//向上寻找所有上级device
                 flag = false;
             }
@@ -174,13 +183,15 @@ public class PlaceMappingGenerted extends ModulePlacement{
             Map<Integer, List<Integer>> modulemap = new HashMap<Integer, List<Integer>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
             for(FogDevice de: area.getArea()) {
                 List<Sensor> sensorOfde = sensorsOfDevcie.get(de.getId());
+                System.out.println("sensor size: " + sensorOfde);
                 for (Sensor sen : sensorOfde) {
+
                     if (sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
                         List<Integer> de2place = new ArrayList<>();
                         int numOfArea = area.getArea().size();
                         int mid = numOfArea;
                         int temp = mid;
-                        //System.out.println("area size: " + numOfArea);
+                        System.out.println("area size: " + numOfArea);
                         List<String> hasPlacedModules = new ArrayList<>();
                         for(String ss : placedModules){
                             hasPlacedModules.add(ss);
@@ -253,6 +264,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
        // Map<Integer, Integer> endpoints = new HashMap<Integer, Integer>();
         List<Sensor> result = new ArrayList<>();
         for(Sensor sensor : getSensors()){
+            //System.out.println("这是decId  " + sensor.getId());
             if(sensor.getGatewayDeviceId()==device.getId()){
                 if(!sensorsAssociated.containsKey(sensor.getTupleType()))
                     sensorsAssociated.put(sensor.getTupleType(), 0);
@@ -261,6 +273,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 result.add(sensor);
             }
         }
+        System.out.println("result大小  " + result.size());
         return result;
     }
 

@@ -23,7 +23,8 @@ import org.fog.utils.distribution.DeterministicDistribution;
 
 import java.util.*;
 
-public class test3 {
+public class test4 {
+
     static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_D = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_H = new ArrayList<FogDevice>();
@@ -36,12 +37,13 @@ public class test3 {
     private static List<AreaOfDevice> areas = new ArrayList<AreaOfDevice>();
 
     static int sensorNum = 0;
+
     public static void main(String[] args) {
         Log.disable();
 
         double tem = 20000;
-        int T = 5000;
-        int N = 50;
+        int T = 1;
+        int N = 1;
         double q = 0.9;
 
 
@@ -69,14 +71,14 @@ public class test3 {
             Loop=0;
             while(Loop<N) {
                 //System.out.println("Loop     " + Loop);
-               //将当前解复制一份，为后续获取邻域解做准备
+                //将当前解复制一份，为后续获取邻域解做准备
                 //执行一次逆转，获取邻域解
 
                 int num_user = 1; // number of cloud users
                 Calendar calendar = Calendar.getInstance();
                 boolean trace_flag = false; // mean trace events
                 CloudSim.init(num_user, calendar, trace_flag);
-               // System.out.println("这是 i   " + i);
+                // System.out.println("这是 i   " + i);
                 appInit();
                 CloudSim.stopSimulation();
                 edif = BestResult.getCurrentValue() - BestResult.getTempValue();
@@ -108,44 +110,44 @@ public class test3 {
     }
 
     public static void appInit(){
-       try {
-           FogUtils.initFogUtils();
-           areas.clear();
-           fogDevices.clear();
-           mobiles_D.clear();
-           mobiles_H.clear();
-           sensors.clear();
-           actuators.clear();
-           TimeKeeper.getInstance().init();
-           String appId0 = "DCNSFog";
-           String appId1 = "HealthCareSystem";
+        try {
+            FogUtils.initFogUtils();
+            areas.clear();
+            fogDevices.clear();
+            mobiles_D.clear();
+            mobiles_H.clear();
+            sensors.clear();
+            actuators.clear();
+            TimeKeeper.getInstance().init();
+            String appId0 = "DCNSFog";
+            String appId1 = "HealthCareSystem";
 
-           FogBroker broker0 = new FogBroker("broker_0");
-           FogBroker broker1 = new FogBroker("broker_1");
+            FogBroker broker0 = new FogBroker("broker_0");
+            FogBroker broker1 = new FogBroker("broker_1");
 
-           Application application_d = createApplication1(appId0, broker0.getId());
-           Application application_h = createApplication2(appId1, broker1.getId());
+            Application application_d = createApplication1(appId0, broker0.getId());
+            Application application_h = createApplication2(appId1, broker1.getId());
 
-           createFogDevices();
+            createFogDevices();
 
-           createDCNSDevices(broker0.getId(), appId0);
-           createHealthCareDevices(broker1.getId(), appId1);
+            createDCNSDevices(broker0.getId(), appId0);
+            createHealthCareDevices(broker1.getId(), appId1);
 
-           ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
-           ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
+            ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
+            ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
 
-           List<Application> apps = new ArrayList<>();
-           apps.add(application_d);
-           apps.add(application_h);
-           Map<String, ModuleMapping> mappings = new HashMap<>();
-           mappings.put(application_d.getAppId(), moduleMapping_d);
-           mappings.put(application_h.getAppId(), moduleMapping_h);
-           GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
-           TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
-           genertedController.startGenerted();
-       }catch (Exception e){
+            List<Application> apps = new ArrayList<>();
+            apps.add(application_d);
+            apps.add(application_h);
+            Map<String, ModuleMapping> mappings = new HashMap<>();
+            mappings.put(application_d.getAppId(), moduleMapping_d);
+            mappings.put(application_h.getAppId(), moduleMapping_h);
+            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
+            TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
+            genertedController.startGenerted();
+        }catch (Exception e){
 
-       }
+        }
     }
 
     private static void createFogDevices() {
@@ -160,30 +162,35 @@ public class test3 {
 
         List<FogDevice> gateways = new ArrayList<FogDevice>();
         List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
+        List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
         for(int i=0;i<2;i++){
             FogDevice gateway = addGw1(i+"", proxy.getId()); // adding a fog device for every Gateway in physical topology. The parent of each gateway is the Proxy Server
             gateways.add(gateway);
+            AreaFogDevices.add(gateway);
             neighbors.add(gateway.getSelfInfo());
         }
-        for(int i=0;i<2;i++){
+        for(int i=0;i<3;i++){
             FogDevice gateway = addGw2(i+"", proxy.getId()); // adding a fog device for every Gateway in physical topology. The parent of each gateway is the Proxy Server
             gateways.add(gateway);
+            AreaFogDevices.add(gateway);
             neighbors.add(gateway.getSelfInfo());
         }
+        AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+        areas.add(areaOfDevice);
         for(FogDevice fog: gateways){
             fog.setNeighbors(neighbors);
         }
     }
 
     private static FogDevice addGw1(String id, int parentId){
-        FogDevice dept = createFogDevice("dd-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dd-"+id, 5000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 5;
             int numofHe = 1;
-            List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
+            //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
             //List<NeighborInArea> neighborsOfH = new ArrayList<NeighborInArea>();
             String mobileId = id+"-"+i;
@@ -191,68 +198,54 @@ public class test3 {
                 FogDevice mobile_d = addMobile_D(mobileId+"-"+num, dept.getId()); // adding mobiles to the physical topology. Smartphones have been modeled as fog devices as well.
                 mobile_d.setUplinkLatency(10); // latency of connection between the smartphone and proxy server is 4 ms
                 fogDevices.add(mobile_d);
-                AreaFogDevices.add(mobile_d);
+                //AreaFogDevices.add(mobile_d);
                 neighbors.add(mobile_d.getSelfInfo());
             }
-            AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
-            areas.add(areaOfDevice);
-           /* for(int num=0;num<numofHe;num++){
-                FogDevice mobile_h = addMobile_H(mobileId+"-"+num, dept.getId()); // adding mobiles to the physical topology. Smartphones have been modeled as fog devices as well.
-                mobile_h.setUplinkLatency(10); // latency of connection between the smartphone and proxy server is 4 ms
-                fogDevices.add(mobile_h);
-                AreaFogDevices.add(mobile_h);
-                neighbors.add(mobile_h.getSelfInfo());
-            }*/
-            for(FogDevice fog : AreaFogDevices){
+           // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+            //areas.add(areaOfDevice);
+           /* for(FogDevice fog : AreaFogDevices){
                 fog.setNeighbors(neighbors);
-            }
+            }*/
         }
         return dept;
     }
     private static FogDevice addGw2(String id, int parentId){
-        FogDevice dept = createFogDevice("dh-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dh-"+id, 5000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 2;
             int numofHe = 5;
-            List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
+            //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
-            //List<NeighborInArea> neighborsOfH = new ArrayList<NeighborInArea>();
             String mobileId = id+"-"+i;
-            /*for(int num=0;num<numofDc;num++){
-                FogDevice mobile_d = addMobile_D(mobileId+"-"+num, dept.getId()); // adding mobiles to the physical topology. Smartphones have been modeled as fog devices as well.
-                mobile_d.setUplinkLatency(10); // latency of connection between the smartphone and proxy server is 4 ms
-                fogDevices.add(mobile_d);
-                AreaFogDevices.add(mobile_d);
-                neighbors.add(mobile_d.getSelfInfo());
-            }*/
+
             for(int num=0;num<numofHe;num++){
                 FogDevice mobile_h = addMobile_H(mobileId+"-"+num, dept.getId()); // adding mobiles to the physical topology. Smartphones have been modeled as fog devices as well.
                 mobile_h.setUplinkLatency(10); // latency of connection between the smartphone and proxy server is 4 ms
                 fogDevices.add(mobile_h);
-                AreaFogDevices.add(mobile_h);
+                //AreaFogDevices.add(mobile_h);
                 neighbors.add(mobile_h.getSelfInfo());
             }
-            AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
-            areas.add(areaOfDevice);
-            for(FogDevice fog : AreaFogDevices){
+           // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+           // areas.add(areaOfDevice);
+            /*for(FogDevice fog : AreaFogDevices){
                 fog.setNeighbors(neighbors);
-            }
+            }*/
         }
         return dept;
     }
 
     private static FogDevice addMobile_D(String id, int parentId){
-        FogDevice mobile = createFogDevice("md-"+id, 5000, 1000, 10000, 270, 3, 0, 87.53, 82.44);
+        FogDevice mobile = createFogDevice("md-"+id, 500, 1000, 10000, 270, 3, 0, 87.53, 82.44);
         mobile.setParentId(parentId);
         mobiles_D.add(mobile);
         return mobile;
     }
 
     private static FogDevice addMobile_H(String id, int parentId){
-        FogDevice mobile = createFogDevice("mh-"+id, 5000, 2048, 10000, 270, 3, 0, 87.53, 82.44);
+        FogDevice mobile = createFogDevice("mh-"+id, 500, 2048, 10000, 270, 3, 0, 87.53, 82.44);
         mobile.setParentId(parentId);
         mobiles_H.add(mobile);
         return mobile;
@@ -411,8 +404,4 @@ public class test3 {
         application.setLoops(loops);
         return application;
     }
-
-
 }
-
-

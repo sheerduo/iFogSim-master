@@ -5,6 +5,8 @@ public class BestResult {
 
     private static double currentValue = Integer.MAX_VALUE;
 
+    private static double tempValue = Integer.MAX_VALUE;
+
     public static double getBestVaule() {
         return bestVaule;
     }
@@ -19,5 +21,13 @@ public class BestResult {
 
     public static void setCurrentValue(double currentValue) {
         BestResult.currentValue = currentValue;
+    }
+
+    public static double getTempValue() {
+        return tempValue;
+    }
+
+    public static void setTempValue(double tempValue) {
+        BestResult.tempValue = tempValue;
     }
 }

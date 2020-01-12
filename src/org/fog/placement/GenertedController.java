@@ -68,10 +68,9 @@ public class GenertedController extends Controller {
                 CloudSim.stopSimulation();
                 double value = valuePlacement();
                 BestResult.setCurrentValue(value);
-                if(BestResult.getBestVaule() > value){
+                /*if(BestResult.getBestVaule() > value){
                     BestResult.setBestVaule(value);
-                }
-                System.out.println("the best value : " + BestResult.getBestVaule() + "  current value :" + value);
+                }*/
                 clearDeviceAppMap();
                // CloudSim.finishSimulation();
                 /*if(num>=0) {
