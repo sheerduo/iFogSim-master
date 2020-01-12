@@ -274,11 +274,11 @@ public class PlaceMappingGenerted extends ModulePlacement{
                     sensorsAssociated.put(sensor.getTupleType(), 0);
                 }
                 sensorsAssociated.put(sensor.getTupleType(), sensorsAssociated.get(sensor.getTupleType()+1));
-                System.out.println("sensor.tupleType:  " + sensor.getTupleType());
+                //System.out.println("sensor.tupleType:  " + sensor.getTupleType());
                 result.add(sensor);
             }
         }
-        System.out.println(device.getId() +  " result大小  " + result.size());
+        //System.out.println(device.getId() +  " result大小  " + result.size());
         return result;
     }
 
