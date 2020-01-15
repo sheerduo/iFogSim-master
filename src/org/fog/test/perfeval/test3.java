@@ -140,7 +140,7 @@ public class test3 {
            Map<String, ModuleMapping> mappings = new HashMap<>();
            mappings.put(application_d.getAppId(), moduleMapping_d);
            mappings.put(application_h.getAppId(), moduleMapping_h);
-           GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
+           GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, new ArrayList<String>());
            TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
            genertedController.startGenerted();
        }catch (Exception e){

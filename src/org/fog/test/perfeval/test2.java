@@ -75,7 +75,7 @@ public class test2 {
 
           /*  PlaceMappingGenerted placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators, apps, mappings, areas);
             placeMappingGenerted.generted();*/
-            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
+            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, null);
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
             genertedController.startGenerted();
           /*  Controller controller = null;

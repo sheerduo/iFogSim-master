@@ -9,10 +9,7 @@ import org.fog.entities.AreaOfDevice;
 import org.fog.entities.FogDevice;
 import org.fog.entities.Sensor;
 import org.fog.test.perfeval.test3;
-import org.fog.utils.BestResult;
-import org.fog.utils.Config;
-import org.fog.utils.FogEvents;
-import org.fog.utils.TimeKeeper;
+import org.fog.utils.*;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -29,10 +26,10 @@ public class GenertedController extends Controller {
 
     Map<String, ModuleMapping> moduleMappings;
     List<AreaOfDevice> areas;
-    public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
+    public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas, List<String> placedModules){
         super(name, fogDevices, sensors, actuators);
         this.apps = apps;
-        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators ,apps, moduleMappings, areas);
+        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators ,apps, moduleMappings, areas, placedModules);
     }
 
     public void initController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
@@ -149,10 +146,13 @@ public class GenertedController extends Controller {
 
         double value = 0.0;
         //System.out.println("used  " + TimeKeeper.getInstance().getLoopIdToTupleIds().keySet().size());
+        BestPlacement.newTemTime("");
         for(Integer loopId : TimeKeeper.getInstance().getLoopIdToTupleIds().keySet()){
             double value1 = TimeKeeper.getInstance().getLoopIdToCurrentAverage().get(loopId);
             value+=value1;
-            System.out.println(getStringForLoopId(loopId) + " ---> "+value1 + " nums: " + TimeKeeper.getInstance().getLoopIdToCurrentNum().get(loopId));
+            String time = getStringForLoopId(loopId) + " ---> "+value1 + " nums: " + TimeKeeper.getInstance().getLoopIdToCurrentNum().get(loopId);
+            BestPlacement.addTemTime(time);
+            System.out.println(time);
             TimeKeeper.getInstance().getLoopIdToCurrentAverage().put(loopId, 0.0);
             TimeKeeper.getInstance().getLoopIdToCurrentNum().put(loopId, 0);
         }

@@ -70,7 +70,7 @@ public class IntelAgent extends ModulePlacement {
             getCurrentModuleMap().put(dev.getId(), new ArrayList<String>());
             getCurrentModuleInstanceNum().put(dev.getId(), new HashMap<String, Integer>());*/
         }
-        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators,applications, moduleMappings,areas);
+        placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators,applications, moduleMappings,areas, null);
     }
 
     /**

@@ -4,6 +4,7 @@ import org.fog.application.AppEdge;
 import org.fog.application.AppModule;
 import org.fog.application.Application;
 import org.fog.entities.*;
+import org.fog.utils.BestPlacement;
 
 import java.util.*;
 
@@ -27,12 +28,12 @@ public class PlaceMappingGenerted extends ModulePlacement{
     protected List<AreaOfDevice> areas;//areas of devices   第三级节点下的所有子节点组成一个area  model放置在area与上级节点之间选择
     protected Map<Integer, Double> currentCpuLoad;
     private Random random = new Random();
-    List<String> placedModules = new ArrayList<String>();
+    List<String> placedModules;
     Map<String, Integer> sensorsAssociated = new HashMap<>() ;  //返回不同类型的sensor
     Map<Integer, List<Sensor>> sensorsOfDevcie = new HashMap<>(); //每个device对应的sensor数量
     Map<String, Integer> actuatorsAssociated = new HashMap<>();
     public PlaceMappingGenerted(List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators,
-                                List<Application> applications, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas){
+                                List<Application> applications, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas, List<String> placedModules){
 
         setFogDevices(fogDevices);
         setSensors(sensors);
@@ -40,6 +41,13 @@ public class PlaceMappingGenerted extends ModulePlacement{
         setApplications(applications);
         setModuleMappings(moduleMappings);
         setAreas(areas);
+        this.placedModules = placedModules;
+        /*for(String appId : moduleMappings.keySet()){
+            ModuleMapping devMap = moduleMappings.get(appId);
+            if(placedModules.contains(moduleMappings.get(devId))) {
+                placedModules.add(moduleMappings.get(devId)))
+            }
+        }*/
         for(AreaOfDevice area: areas) {
             for(FogDevice dev: area.getArea()){
                 if(!sensorsOfDevcie.containsKey(dev.getId())){
@@ -74,7 +82,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
             ModuleMapping moduleMapping1 = ModuleMapping.createModuleMapping();
             moduleMappingList.add(moduleMapping1);
         }
-        //System.out.println("0000随多少 " );
+        //System.out.println("0000随多少 " + areas.size());
         for(AreaOfDevice  area : areas){
             //System.out.println("11111 " + area.getArea().size());
 
@@ -88,10 +96,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 placedModules.addAll(actuatorsAssociated.keySet()); // ADDING ALL ACTUATORS TO PLACED LIST
             }
             result = genertedPlacement(area, 3);
+            BestPlacement.setTepTupleChain(result);
             Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>(); //Integer- sensorId   String - moduleMap  Integer-deviceId
-
-
-
             //List<String> appName = result.keySet();
             int numOfApp = 0;
             for(String appname : result.keySet()){
@@ -130,6 +136,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
                 //device.setSensorModuleChaineMap(sensorModuleChaineMap);
             }
         }
+        BestPlacement.setTepMapping(moduleMappingList);
         System.out.println("modulemapping:  ");
         for(int i=0; i<2;i++){
             System.out.println(moduleMappingList.get(i).moduleMapping);
@@ -201,11 +208,12 @@ public class PlaceMappingGenerted extends ModulePlacement{
                             hasPlacedModules.add(ss);
                         }
                         for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
-                            //System.out.println("hasPlacedModules:  " + placedModules + "edge.destination: " + edge.getDestination());
+                           // System.out.println("hasPlacedModules:  " + placedModules + "edge.destination: " + edge.getDestination());
                             if (!hasPlacedModules.contains(edge.getDestination())) {
-                               // System.out.println("edge.destination:  " + edge.getDestination());
                                 int ran = random.nextInt(max - min + 1);
                                 int place2 = min + ran;
+                               // System.out.println("edge.destination:  " + edge.getDestination() + " max: " + max + "  min: " + min + " place2:  " + place2);
+
                                 //int place2 = (int)(min+Math.random()*(max-min));
                                 // System.out.println("temp: " + place2  + "  device num: " + (devices.size()-1) + "  min:" + min + "  max:" +max + "  ran: " + ran);
                                 if (place2 > mid && place2 > temp) {
@@ -214,10 +222,12 @@ public class PlaceMappingGenerted extends ModulePlacement{
                                 }
                                 de2place.add(devices.get(place2).getId());
                                 hasPlacedModules.add(edge.getDestination());
+                                //System.out.println("edge.destination: " + edge.getDestination());
+
                             }
                         }
                         modulemap.put(sen.getId(), de2place);
-                        //sSystem.out.println("de2place  " + de2place);
+                        //System.out.println("de2place  " + de2place);
                         min = 0;
                     }
 

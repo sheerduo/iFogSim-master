@@ -21,6 +21,10 @@ import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.*;
 import org.fog.utils.distribution.DeterministicDistribution;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 public class test4 {
@@ -37,13 +41,24 @@ public class test4 {
     private static List<AreaOfDevice> areas = new ArrayList<AreaOfDevice>();
 
     static int sensorNum = 0;
+    protected static File file = new File("D:\\fog1\\fog2\\result.txt");
+    protected static Writer out;
 
-    public static void main(String[] args) {
+    static {
+        try {
+            out = new FileWriter(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void main(String[] args) throws IOException {
         Log.disable();
 
         double tem = 20000;
-        int T = 5000;
-        int N = 50;
+        int T = 5;
+        int N = 2;
         double q = 0.9;
 
 
@@ -87,6 +102,10 @@ public class test4 {
                     BestResult.setTempValue(BestResult.getCurrentValue());
                     if(BestResult.getCurrentValue() < BestResult.getBestVaule()){
                         BestResult.setBestVaule(BestResult.getCurrentValue());
+                        BestPlacement.saveBestTime();
+                        BestPlacement.setBestMapping(BestPlacement.getTepMapping());
+                        BestPlacement.setBestTupleChain(BestPlacement.getTepTupleChain());
+                        BestPlacement.saveResult();
                     }
                     //让这个邻域解的评价值取代旧解，并且把终止序列也一并取代
                 }else {
@@ -135,14 +154,24 @@ public class test4 {
 
             ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
             ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
-
+            for(FogDevice device : fogDevices) {
+                if (device.getName().startsWith("md")) {
+                    moduleMapping_d.addModuleToDevice("motion_detector", device.getName());  // fixing all instances of the Client module to the Smartphones
+                }
+                if (device.getName().startsWith("mh")) {
+                    moduleMapping_h.addModuleToDevice("Client", device.getName());  // fixing all instances of the Client module to the Smartphones
+                }
+            }
+            List placedModules = new ArrayList();
+            placedModules.add("Client");
+            placedModules.add("motion_detector");
             List<Application> apps = new ArrayList<>();
             apps.add(application_d);
             apps.add(application_h);
             Map<String, ModuleMapping> mappings = new HashMap<>();
             mappings.put(application_d.getAppId(), moduleMapping_d);
             mappings.put(application_h.getAppId(), moduleMapping_h);
-            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas);
+            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, placedModules);
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
             genertedController.startGenerted();
         }catch (Exception e){
@@ -385,7 +414,7 @@ public class test4 {
         //application.addAppModule("Client1",1000,10,500, 0);
 
         application.addAppEdge("Heart_Sensor", "Client", 1000, 500, "Heart_Sensor", Tuple.UP, AppEdge.SENSOR,999, 1);
-        application.addAppEdge("Client", "Data_filtering", 4000, 500, "raw_heart", Tuple.UP, AppEdge.MODULE,10, 2);
+        application.addAppEdge("Client", "Data_filtering", 2000, 500, "raw_heart", Tuple.UP, AppEdge.MODULE,10, 2);
         application.addAppEdge("Data_filtering", "Data_processing", 5500, 1500, "filtered_heart", Tuple.UP, AppEdge.MODULE,10, 3);
         application.addAppEdge("Data_processing", "Event_handler", 3000, 700, "analyzed_heart", Tuple.UP, AppEdge.MODULE,10, 4);
         application.addAppEdge("Event_handler", "Client", 1000, 500, "response_heart", Tuple.DOWN, AppEdge.MODULE,10,5);
