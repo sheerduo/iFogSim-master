@@ -57,8 +57,8 @@ public class test4 {
         Log.disable();
 
         double tem = 20000;
-        int T = 5;
-        int N = 2;
+        int T = 5000;
+        int N = 50;
         double q = 0.9;
 
 
@@ -156,7 +156,7 @@ public class test4 {
             ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
             for(FogDevice device : fogDevices) {
                 if (device.getName().startsWith("md")) {
-                    moduleMapping_d.addModuleToDevice("motion_detector", device.getName());  // fixing all instances of the Client module to the Smartphones
+                    moduleMapping_d.addModuleToDevice("Client-1", device.getName());  // fixing all instances of the Client module to the Smartphones
                 }
                 if (device.getName().startsWith("mh")) {
                     moduleMapping_h.addModuleToDevice("Client", device.getName());  // fixing all instances of the Client module to the Smartphones
@@ -164,7 +164,9 @@ public class test4 {
             }
             List placedModules = new ArrayList();
             placedModules.add("Client");
-            placedModules.add("motion_detector");
+            placedModules.add("Display");
+            placedModules.add("Client-1");
+            placedModules.add("Display-1");
             List<Application> apps = new ArrayList<>();
             apps.add(application_d);
             apps.add(application_h);
@@ -175,7 +177,7 @@ public class test4 {
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
             genertedController.startGenerted();
         }catch (Exception e){
-
+            e.printStackTrace();
         }
     }
 
@@ -198,7 +200,7 @@ public class test4 {
             AreaFogDevices.add(gateway);
             neighbors.add(gateway.getSelfInfo());
         }
-        for(int i=0;i<3;i++){
+        for(int i=0;i<6;i++){
             FogDevice gateway = addGw2(i+"", proxy.getId()); // adding a fog device for every Gateway in physical topology. The parent of each gateway is the Proxy Server
             gateways.add(gateway);
             AreaFogDevices.add(gateway);
@@ -283,9 +285,9 @@ public class test4 {
     private static void createDCNSDevices(int userId, String appId) {
         for(FogDevice mobile : mobiles_D){
             String id = mobile.getName();
-            Sensor eegSensor = new Sensor("s-"+appId+"-"+id, "CAMERA", userId, appId, new DeterministicDistribution(5)); // inter-transmission time of EEG sensor follows a deterministic distribution
+            Sensor eegSensor = new Sensor("s-"+appId+"-"+id, "Heart_Sensor-1", userId, appId, new DeterministicDistribution(5)); // inter-transmission time of EEG sensor follows a deterministic distribution
             sensors.add(eegSensor);
-            Actuator display = new Actuator("a-"+appId+"-"+id, userId, appId, "PTZ_CONTROL");
+            Actuator display = new Actuator("a-"+appId+"-"+id, userId, appId, "Display-1");
             actuators.add(display);
             eegSensor.setGatewayDeviceId(mobile.getId());
             eegSensor.setLatency(1.0);  // latency of connection between EEG sensors and the parent Smartphone is 6 ms
@@ -370,35 +372,29 @@ public class test4 {
         /*
          * Adding modules (vertices) to the application model (directed graph)
          */
-        application.addAppModule("motion_detector", 1000, 10, 500, 0);
-        application.addAppModule("object_detector",1000, 10, 500, 1);
-        application.addAppModule("object_tracker", 1000, 10, 500, 2);
-        application.addAppModule("user_interface", 10, 3);
+        application.addAppModule("Client-1",500,10,500, 0);
+        application.addAppModule("Data_filtering-1",1000,10,100, 1);
+        application.addAppModule("Data_processing-1",1500,10,100, 2);
+        application.addAppModule("Event_handler-1",1000, 10, 200, 3);
+        //application.addAppModule("Client1",1000,10,500, 0);
 
-        /*
-         * Connecting the application modules (vertices) in the application model (directed graph) with edges
-         */
-        application.addAppEdge("CAMERA", "motion_detector", 1000, 20000, "CAMERA", Tuple.UP, AppEdge.SENSOR,999, 1); // adding edge from CAMERA (sensor) to Motion Detector module carrying tuples of type CAMERA
-        application.addAppEdge("motion_detector", "object_detector", 2000, 2000, "MOTION_VIDEO_STREAM", Tuple.UP, AppEdge.MODULE,20, 2); // adding edge from Motion Detector to Object Detector module carrying tuples of type MOTION_VIDEO_STREAM
-        application.addAppEdge("object_detector", "user_interface", 1500, 2000, "DETECTED_OBJECT", Tuple.UP, AppEdge.MODULE, 20, 3); // adding edge from Object Detector to User Interface module carrying tuples of type DETECTED_OBJECT
-        application.addAppEdge("object_detector", "object_tracker", 1000, 100, "OBJECT_LOCATION", Tuple.UP, AppEdge.MODULE, 20, 4); // adding edge from Object Detector to Object Tracker module carrying tuples of type OBJECT_LOCATION
-        application.addAppEdge("object_tracker", "PTZ_CONTROL", 100, 28, 100, "PTZ_PARAMS", Tuple.DOWN, AppEdge.ACTUATOR); // adding edge from Object Tracker to PTZ CONTROL (actuator) carrying tuples of type PTZ_PARAMS
+        application.addAppEdge("Heart_Sensor-1", "Client-1", 500, 250, "Heart_Sensor-1", Tuple.UP, AppEdge.SENSOR,999, 1);
+        application.addAppEdge("Client-1", "Data_filtering-1", 1000, 250, "raw_heart-1", Tuple.UP, AppEdge.MODULE,10, 2);
+        application.addAppEdge("Data_filtering-1", "Data_processing-1", 2750, 750, "filtered_heart-1", Tuple.UP, AppEdge.MODULE,10, 3);
+        application.addAppEdge("Data_processing-1", "Event_handler-1", 1500, 350, "analyzed_heart-1", Tuple.UP, AppEdge.MODULE,10, 4);
+        application.addAppEdge("Event_handler-1", "Client-1", 500, 250, "response_heart-1", Tuple.DOWN, AppEdge.MODULE,10,5);
+        application.addAppEdge("Client-1", "Display-1", 250, 250, "display_data-1", Tuple.DOWN, AppEdge.ACTUATOR,10,1);
+        ///application.addAppEdge("Event_handler", "Display", 500, 500, "response_heart", Tuple.DOWN, AppEdge.ACTUATOR);
 
-        /*
-         * Defining the input-output relationships (represented by selectivity) of the application modules.
-         */
-        application.addTupleMapping("motion_detector", "CAMERA", "MOTION_VIDEO_STREAM", new FractionalSelectivity(1.0)); // 1.0 tuples of type MOTION_VIDEO_STREAM are emitted by Motion Detector module per incoming tuple of type CAMERA
-        application.addTupleMapping("object_detector", "MOTION_VIDEO_STREAM", "OBJECT_LOCATION", new FractionalSelectivity(1.0)); // 1.0 tuples of type OBJECT_LOCATION are emitted by Object Detector module per incoming tuple of type MOTION_VIDEO_STREAM
-        application.addTupleMapping("object_detector", "MOTION_VIDEO_STREAM", "DETECTED_OBJECT", new FractionalSelectivity(0.05)); // 0.05 tuples of type MOTION_VIDEO_STREAM are emitted by Object Detector module per incoming tuple of type MOTION_VIDEO_STREAM
+        application.addTupleMapping("Client-1","Heart_Sensor-1","raw_heart-1", new FractionalSelectivity(1.0));
+        application.addTupleMapping("Data_filtering-1","raw_heart-1","filtered_heart-1", new FractionalSelectivity(1.0));
+        application.addTupleMapping("Data_processing-1","filtered_heart-1","analyzed_heart-1", new FractionalSelectivity(1.0));
+        application.addTupleMapping("Event_handler-1","analyzed_heart-1","response_heart-1", new FractionalSelectivity(1.0));
+        application.addTupleMapping("Client-1","response_heart-1","display_data-1", new FractionalSelectivity(1.0));
 
-        /*
-         * Defining application loops (maybe incomplete loops) to monitor the latency of.
-         * Here, we add two loops for monitoring : Motion Detector -> Object Detector -> Object Tracker and Object Tracker -> PTZ Control
-         */
-        final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("CAMERA");add("motion_detector");add("object_detector");add("object_tracker");}});
-        final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("object_tracker");add("PTZ_CONTROL");}});
-        List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);add(loop2);}};
-
+        final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("Heart_Sensor-1");add("Client-1");add("Data_filtering-1");add("Data_processing-1");add("Event_handler-1");add("Client-1");add("Display-1");}});
+        //final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("Event_handler");add("Client");add("Display");}});
+        List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);}};
         application.setLoops(loops);
         return application;
     }

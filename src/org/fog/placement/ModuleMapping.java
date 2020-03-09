@@ -31,7 +31,6 @@ public class ModuleMapping {
 	 * Add <b>instanceCount</b> number of instances of module <b>moduleName</b> to <b>device deviceName</b>
 	 * @param moduleName
 	 * @param deviceName
-	 * @param instanceCount
 	 */
 	public void addModuleToDevice(String moduleName, String deviceName){
 		if(!getModuleMapping().containsKey(deviceName))
@@ -39,5 +38,11 @@ public class ModuleMapping {
 		if(!getModuleMapping().get(deviceName).contains(moduleName))
 			getModuleMapping().get(deviceName).add(moduleName);
 	}
-	
+
+	@Override
+	public String toString() {
+		return "ModuleMapping{" +
+				"moduleMapping=" + moduleMapping +
+				'}';
+	}
 }

@@ -12,9 +12,9 @@ import java.util.Map;
 
 public class BestPlacement {
     //现在只计算一个area
-    private static Map<String, Map<Integer, List<Integer>>> bestTupleChain = null;
+    private static Map<Integer, Map<String, Integer>> bestTupleChain = null;
     private static List<ModuleMapping> bestMapping = null;
-    private static Map<String, Map<Integer, List<Integer>>> tepTupleChain = null;
+    private static Map<Integer, Map<String, Integer>> tepTupleChain = null;
     private static List<ModuleMapping> tepMapping = null;
     private static String temTime;
     protected static File file = new File("D:\\fog1\\fog2\\result.txt");
@@ -28,11 +28,11 @@ public class BestPlacement {
         }
     }
 
-    public static Map<String, Map<Integer, List<Integer>>> getBestTupleChain() {
+    public static Map<Integer, Map<String, Integer>> getBestTupleChain() {
         return bestTupleChain;
     }
 
-    public static void setBestTupleChain(Map<String, Map<Integer, List<Integer>>> bestTupleChain) {
+    public static void setBestTupleChain(Map<Integer, Map<String, Integer>> bestTupleChain) {
         BestPlacement.bestTupleChain = bestTupleChain;
     }
 
@@ -44,11 +44,11 @@ public class BestPlacement {
         BestPlacement.bestMapping = bestMapping;
     }
 
-    public static Map<String, Map<Integer, List<Integer>>> getTepTupleChain() {
+    public static Map<Integer, Map<String, Integer>> getTepTupleChain() {
         return tepTupleChain;
     }
 
-    public static void setTepTupleChain(Map<String, Map<Integer, List<Integer>>> tepTupleChain) {
+    public static void setTepTupleChain(Map<Integer, Map<String, Integer>> tepTupleChain) {
         BestPlacement.tepTupleChain = tepTupleChain;
     }
 
@@ -71,18 +71,18 @@ public class BestPlacement {
     public static void saveResult() throws IOException {
         out.write("Best sensor tuple chain : \r\n" );
         if(bestTupleChain != null) {
-            for (String appId : bestTupleChain.keySet()) {
+           /* for (String appId : bestTupleChain.keySet()) {
                 out.write(appId + "\r\n");
-                Map<Integer, List<Integer>> tupleMap = bestTupleChain.get(appId);
-                for (Integer sensorId : tupleMap.keySet()) {
+                Map<Integer, Map<String, Integer>> tupleMap = bestTupleChain.get(appId);*/
+                for (Integer sensorId : bestTupleChain.keySet()) {
                     out.write(sensorId + " : ");
-                    List<Integer> devChain = tupleMap.get(sensorId);
-                    for (Integer devId : devChain) {
-                        out.write(devId + ", ");
+                    Map<String, Integer> devChain = bestTupleChain.get(sensorId);
+                    for (String moduleName : devChain.keySet()) {
+                        out.write(moduleName + " : " + devChain.get(moduleName));
                     }
                     out.write("  \r\n");
                 }
-            }
+           // }
         }
         out.write("Best module mapping : \r\n" );
         if(bestMapping != null){
