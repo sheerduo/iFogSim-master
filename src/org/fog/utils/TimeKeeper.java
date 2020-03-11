@@ -23,6 +23,12 @@ public class TimeKeeper {
 	private Map<Integer, Double> loopIdToCurrentAverage;
 	private Map<Integer, Integer> loopIdToCurrentNum;
 
+	/**
+	 *绑定sensorId的延迟
+	 */
+	private  Map<Integer, Double> sensorIdToActuator;
+	private  Map<Integer, Integer> sensorIdToNum;
+
 
 	
 	public static TimeKeeper getInstance(){
@@ -39,6 +45,8 @@ public class TimeKeeper {
 		loopIdToTupleIds.clear();
 		loopIdToCurrentNum.clear();
 		loopIdToCurrentAverage.clear();
+		sensorIdToActuator.clear();
+		sensorIdToNum.clear();
 		simulationStartTime=0;
 		count=0;
 		emitTimes.clear();
@@ -87,6 +95,8 @@ public class TimeKeeper {
 		setTupleIdToCpuStartTime(new HashMap<Integer, Double>());
 		setLoopIdToCurrentAverage(new HashMap<Integer, Double>());
 		setLoopIdToCurrentNum(new HashMap<Integer, Integer>());
+		setSensorIdToActuator(new HashMap<Integer, Double>());
+		setSensorIdToNum(new HashMap<Integer, Integer>());
 	}
 	
 	public int getCount() {
@@ -170,6 +180,20 @@ public class TimeKeeper {
 	public void setLoopIdToCurrentNum(Map<Integer, Integer> loopIdToCurrentNum) {
 		this.loopIdToCurrentNum = loopIdToCurrentNum;
 	}
-	
-	
+
+	public Map<Integer, Double> getSensorIdToActuator() {
+		return sensorIdToActuator;
+	}
+
+	public void setSensorIdToActuator(Map<Integer, Double> sensorIdToActuator) {
+		this.sensorIdToActuator = sensorIdToActuator;
+	}
+
+	public Map<Integer, Integer> getSensorIdToNum() {
+		return sensorIdToNum;
+	}
+
+	public void setSensorIdToNum(Map<Integer, Integer> sensorIdToNum) {
+		this.sensorIdToNum = sensorIdToNum;
+	}
 }

@@ -5,6 +5,7 @@ import org.fog.application.AppModule;
 import org.fog.application.Application;
 import org.fog.entities.*;
 import org.fog.utils.BestPlacement;
+import org.fog.utils.TimeKeeper;
 
 import java.util.*;
 
@@ -77,6 +78,114 @@ public class PlaceMappingGenerted extends ModulePlacement{
         }
     }
 
+    public List<ModulePlacement> gener(List<FogDevice> deviceTable, Map<String, Map<Integer, List<String>>> sensor_moduleChain){
+       // Map<String, Map<Integer, Map<String, Integer>>> result;
+        List<ModuleMapping> moduleMappingList = new ArrayList<>();
+        for(String appName : getModuleMappings().keySet()){ //将已放置的放入
+            moduleMappingList.add(getModuleMappings().get(appName));
+        }
+
+        Map<String, Map<Integer, Map<String, Integer>>> templeChain = BestPlacement.getTepTupleChain();
+        Map<String, List<Integer>> replaceChain = BestPlacement.getReplaceSensorChain();
+        for(String app : replaceChain.keySet()){
+            List<Integer> replaceSensor = replaceChain.get(app);
+            for(Integer sensorId : replaceSensor){
+
+                Map<String, Integer> chain = new HashMap<>();
+                List<String> moduleChain = sensor_moduleChain.get(app).get(sensorId);
+                int Max = deviceTable.size();
+                int temp = 0;
+                int mid = Max-1;
+                boolean flag = true;
+                int tempRan=0;
+                for(String module : moduleChain){
+                    int ran = 0;
+                    if(flag){//第一次
+                        ran = random.nextInt(Max)+1;
+                        tempRan = ran;
+                       // System.out.println( "  ranA " + ran);
+                        /*if(ran>mid){
+                            temp=Max;
+                        }*/
+                        flag=false;
+                    }else {//其它次
+                        int gai = random.nextInt(100);
+
+                        if(gai>70){
+                            /*int gai1 = random.nextInt(100);
+                            if(gai1>70) {*/
+                                ran = random.nextInt(Max-1) + 1;
+                                tempRan = ran;
+                                /*if (temp == 0) {
+                                    ran = random.nextInt(Max-1) + 1;
+                                    tempRan = ran;
+                                    //System.out.println( "  ranB " + ran);
+                                } else {
+                                    ran = temp;
+                                }*/
+                            /*}else {
+                                ran = tempRan;
+                            }*/
+                        }else {
+                            ran = Max;
+                            //temp = Max;
+                        }
+                    }
+                    //System.out.println("deviceTable size  " + deviceTable.size() + "  ran " + ran);
+                   chain.put(module, deviceTable.get(ran-1).getId());
+                }
+                templeChain.get(app).put(sensorId, chain);
+            }
+        }
+        int numOfApp = 0;
+        Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>(); //Integer- sensorId   String - moduleMap  Integer-deviceId
+        for(String appname : templeChain.keySet()){
+            //Map<Integer, Map<String, Integer>> sensorChain = new HashMap<>();
+            Map<Integer, Map<String, Integer>> mm = templeChain.get(appname);//从生成的结果中取出的
+            ModuleMapping moduleMapping = moduleMappingList.get(numOfApp);
+            for(Integer sensorId : mm.keySet()){
+                Map<String, Integer> moduleChain2Device = new HashMap<>();//要放入sensor的
+                Map<String, Integer> module_dev = mm.get(sensorId);
+                Application app = applications.get(numOfApp);
+                for(Sensor sensor : getSensors()){
+                    if (sensor.getId() == sensorId){
+                        int gatewayId = sensor.getGatewayDeviceId();
+                        String gatewayName = getDeviceById(gatewayId).getName();
+                        List<String> modNames = moduleMapping.getModuleMapping().get(gatewayName);
+                        moduleChain2Device.put(modNames.get(0), gatewayId);
+                    }
+                }
+
+                for(String moduleName : module_dev.keySet()){
+                    moduleMapping.addModuleToDevice(moduleName, getDeviceById(module_dev.get(moduleName)).getName());
+                    moduleChain2Device.put(moduleName, module_dev.get(moduleName));
+                }
+                //sensorChain.put(sensorId, moduleChain2Device);
+                sensorModuleChaineMap.put(sensorId, moduleChain2Device);
+            }
+            //sensorModuleChaineMap.put(appname, sensorChain);
+            numOfApp++;
+        }
+        BestPlacement.setTepTupleChain(templeChain);
+        for (FogDevice device : areas.get(0).getArea()) {
+            List<Sensor> sensors = sensorsOfDevcie.get(device.getId());
+            for (Sensor sensor1 : sensors) {
+                //if(chain.keySet().contains(sensor1.getId())) {
+                sensor1.setChainMap(sensorModuleChaineMap.get(sensor1.getId()));
+                //}
+            }
+        }
+
+        BestPlacement.setTepMapping(moduleMappingList);
+        List<ModulePlacement> modulePlacementList = new ArrayList<>();
+        for(int i=0;i<2;i++){
+            ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(i), moduleMappingList.get(i));
+            modulePlacement1.mapModules();
+            modulePlacementList.add(modulePlacement1);
+        }
+        return modulePlacementList;
+    }
+
     /**
      * 返回 the list of module  顺序与 application 相当
      * @return
@@ -97,8 +206,8 @@ public class PlaceMappingGenerted extends ModulePlacement{
 
             Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>(); //Integer- sensorId   String - moduleMap  Integer-deviceId
             int numOfApp = 0;
-            //Map<String, Map<Integer, Map<String, Integer>>> resultChain = new HashMap<>();
             for(String appname : result.keySet()){
+                //Map<Integer, Map<String, Integer>> sensorChain = new HashMap<>();
                 Map<Integer, Map<String, Integer>> mm = result.get(appname);//从生成的结果中取出的
                 ModuleMapping moduleMapping = moduleMappingList.get(numOfApp);
                 for(Integer sensorId : mm.keySet()){
@@ -115,57 +224,30 @@ public class PlaceMappingGenerted extends ModulePlacement{
                     }
 
                     for(String moduleName : module_dev.keySet()){
-                        //System.out.println("mmm: " + moduleName);
                         moduleMapping.addModuleToDevice(moduleName, getDeviceById(module_dev.get(moduleName)).getName());
                         moduleChain2Device.put(moduleName, module_dev.get(moduleName));
                     }
 
-                    /*List<AppEdge> edges = app.getEdges();
-
-
-                    for(int i=0;i<devices.size();i++){//
-                        Integer devId = devices.get(i);
-                        String devName = getDeviceById(devId).getName();
-                        List<String> modules = new ArrayList<>();
-                        //mapping.put(devName, modules);
-                        for (AppEdge edge1 : app.getEdges()){
-                            if(!hasPlacedeModules.contains(edge1.getDestination())){
-                                String module = edge1.getDestination();
-                                moduleChain2Device.put(module, devId);
-                                moduleMapping.addModuleToDevice(module, devName);
-                                System.out.println("mmmm: " + moduleMapping);
-                                modules.add(module);
-                                break;
-                            }else {
-                                if(edge1.getEdgeType() != AppEdge.ACTUATOR){
-                                  //  for()
-                                }
-                            }
-                        }
-                    }*/
+                    //sensorChain.put(sensorId, moduleChain2Device);
                     sensorModuleChaineMap.put(sensorId, moduleChain2Device);
                 }
+
                 numOfApp++;
             }
-            BestPlacement.setTepTupleChain(sensorModuleChaineMap);
-            for(FogDevice device : area.getArea()){
-                List<Sensor> sensors = sensorsOfDevcie.get(device.getId());
-                for(Sensor sensor1 : sensors){
-                    //System.out.println(sensor1.getId() + "  " + sensorModuleChaineMap.get(sensor1.getId()));
-                    sensor1.setChainMap(sensorModuleChaineMap.get(sensor1.getId()));
+            BestPlacement.setTepTupleChain(result);
+
+                for (FogDevice device : area.getArea()) {
+                    List<Sensor> sensors = sensorsOfDevcie.get(device.getId());
+                    for (Sensor sensor1 : sensors) {
+                        //if(chain.keySet().contains(sensor1.getId())) {
+                            sensor1.setChainMap(sensorModuleChaineMap.get(sensor1.getId()));
+                        //}
+                    }
                 }
-                //device.setSensorModuleChaineMap(sensorModuleChaineMap);
-            }
+
         }
         BestPlacement.setTepMapping(moduleMappingList);
-       /* System.out.println("modulemapping:  ");
-        for(int i=0; i<2;i++){
-            System.out.println(moduleMappingList.get(i).getModuleMapping());
-        }*/
-        //mapModules();
         List<ModulePlacement> modulePlacementList = new ArrayList<>();
-       // ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(0), moduleMappingList.get(0));
-        //ModulePlacement modulePlacement2 = new ModulePlacementMapping(fogDevices, applications.get(1), moduleMappingList.get(1));
         for(int i=0;i<2;i++){
             ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(i), moduleMappingList.get(i));
             modulePlacement1.mapModules();
@@ -191,11 +273,13 @@ public class PlaceMappingGenerted extends ModulePlacement{
         for(FogDevice d : area.getArea()){
             devices.add(d);
         }
-        FogDevice dd = area.getArea().get(0);
-        boolean flag = true;
-        int Max = area.getArea().size();
+        devices.add(getDeviceByName("cloud"));
+
+        int Max = devices.size();
         //将Area内以及上级的device都纳入范围
-        while(flag){
+        // FogDevice dd = area.getArea().get(0);
+        //        boolean flag = true;
+       /* while(flag){
             dd = getDeviceById(dd.getParentId());
             //System.out.println("begin div   " + dd.getName());
             if(dd.getName().equals("cloud")){//向上寻找所有上级device
@@ -203,67 +287,49 @@ public class PlaceMappingGenerted extends ModulePlacement{
             }
             devices.add(dd);
             Max++;
-        }
+        }*/
         //切记前面的device为低层级的 后面的为高层级的
         for(Application app:getApplications()){
-            //ModuleMapping mapping = ModuleMapping.createModuleMapping();
-            //int sensorNum = sensorsAssociated.get(app.getEdges().get(0).getSource());//获取sensor数量  sensor数量代表需要放置的module数量！
             int max = Max-1;//初始max代表所有device
             int min = 0;
-            //int sensors = 10;
-            //boolean flag1 = true;
             Map<Integer, Map<String, Integer>> modulemap = new HashMap<Integer, Map<String, Integer>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
             for(FogDevice de: area.getArea()) {
                 List<Sensor> sensorOfde = sensorsOfDevcie.get(de.getId());
-                //System.out.println(de.getId() + "  sensor size: " + sensorOfde);
                 for (Sensor sen : sensorOfde) {
 
                     if (sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
                         Map<String, Integer> de2place = new HashMap<>();
                         int numOfArea = area.getArea().size();
                         int mid = numOfArea;
-                        int temp = mid;
-                       // System.out.println("area size: " + numOfArea);
+                        int temp = 0;
                         List<String> hasPlacedModules = new ArrayList<>();
                         for(String ss : placedModules){
                             hasPlacedModules.add(ss);
                         }
                         for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
-                            //System.out.println("hasPlacedModules:  " + placedModules + "edge.destination: " + edge.getDestination());
                             if (!hasPlacedModules.contains(edge.getDestination())) {
-                                int ran = random.nextInt(max - min + 1);
-                                int place2 = min + ran;
-                                //System.out.println("edge.destination:  " + edge.getDestination() + " max: " + max + "  min: " + min + " place2:  " + place2);
-
-                                //int place2 = (int)(min+Math.random()*(max-min));
-                                // System.out.println("temp: " + place2  + "  device num: " + (devices.size()-1) + "  min:" + min + "  max:" +max + "  ran: " + ran);
-                                if (place2 > mid && place2 > temp) {
-                                    temp = place2;
-                                    min = temp;
+                                if(temp==0) {
+                                    int ran = random.nextInt(Max)+1;
+                                    if (ran > mid) {
+                                        temp = Max;
+                                    }
+                                   // System.out.println("ran     " + ran + "  max  " + Max);
+                                    de2place.put(edge.getDestination(), devices.get(ran - 1).getId());
+                                    hasPlacedModules.add(edge.getDestination());
+                                }else{
+                                    de2place.put(edge.getDestination(), devices.get(temp-1).getId());
+                                    hasPlacedModules.add(edge.getDestination());
                                 }
-                                de2place.put(edge.getDestination(), devices.get(place2).getId());
-                                hasPlacedModules.add(edge.getDestination());
-                                //System.out.println("edge.destination: " + edge.getDestination());
-
                             }
                         }
                         modulemap.put(sen.getId(), de2place);
-                        //System.out.println("de2place  " + de2place);
                         min = 0;
                     }
 
                 }
-            }//}
+            }
             result1.put(app.getAppId(), modulemap);
-            //System.out.println("result:  " + result1);
         }
-
-        //System.out.println("devices : ");
-       /* for(FogDevice device : devices){
-            System.out.print(device.getId() + "  ");
-        }*/
-        //System.out.println( "generted mapping" + result1);
-
 
         return result1;
     }
@@ -313,6 +379,145 @@ public class PlaceMappingGenerted extends ModulePlacement{
         }
         //System.out.println(device.getId() +  " result大小  " + result.size());
         return result;
+    }
+
+    public Map<String, List<Integer>> generReplaceSensor(Map<String, Map<Integer, List<String>>> chain){
+        Map<String, List<Integer>>  rePlaceSensor = new HashMap<>();
+        Set<String> apps = chain.keySet();
+
+        for(Integer sensor111 :  TimeKeeper.getInstance().getSensorIdToActuator().keySet()){
+            System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111));
+        }
+
+        for(String app:apps){
+            Map<Integer, List<String>> chainOfApp = chain.get(app);
+            Set<Integer> sensors = chainOfApp.keySet();
+            List<Double> delays = new ArrayList<>();
+            List<Integer> sensorsToReplace = new ArrayList<>();
+            for(Integer sensorId:sensors){
+                //System.out.println("问题" + sensorId);
+                double delay = Double.MAX_VALUE;
+                if(TimeKeeper.getInstance().getSensorIdToActuator().keySet().contains(sensorId)){
+                    delay = TimeKeeper.getInstance().getSensorIdToActuator().get(sensorId);
+                }
+                if(delays.size()==0) {     //第一个直接放入
+                    delays.add(0, delay);
+                    sensorsToReplace.add(0, sensorId);
+                    continue;
+                }
+                if(delays.size()<2){
+                    if(delay<delays.get(delays.size()-1)){
+                        delays.add(delay);
+                        sensorsToReplace.add(sensorId);
+                    }else {
+                        for (int index = delays.size()-1; index >= 0; index--) {
+                            if (delay<delays.get(index)){
+                                delays.add(index+1, delay);
+                                sensorsToReplace.add(index+1, sensorId);
+                                break;
+                            }
+                            if(index == 0){
+                                delays.add(index, delay);
+                                sensorsToReplace.add(index, sensorId);
+                            }
+                        }
+                    }
+                }else {
+                    if(delay>delays.get(delays.size()-1)) {
+                        delays.remove(delays.size() - 1);
+                        sensorsToReplace.remove(sensorsToReplace.size()-1);
+                        for (int index = delays.size()-1; index >= 0; index--) {
+                            if (delay < delays.get(index)) {
+                                delays.add(index + 1, delay);
+                                sensorsToReplace.add(index + 1, sensorId);
+                                break;
+                            }
+                            if (index == 0) {
+                                delays.add(index, delay);
+                                sensorsToReplace.add(index, sensorId);
+                            }
+                        }
+                    }
+                }
+            }
+            rePlaceSensor.put(app, sensorsToReplace);
+        }
+        System.out.println("需要重新放置" + rePlaceSensor);
+        return rePlaceSensor;
+    }
+
+    /**
+     * 生成fogdevice列表
+     * @param area
+     * @return
+     */
+    public List<FogDevice> generDeviceTable(AreaOfDevice area){
+        List<FogDevice> deviceTable = new ArrayList<>();
+        for(FogDevice d : area.getArea()){
+            deviceTable.add(d);
+        }
+        deviceTable.add(getDeviceByName("cloud"));
+        return deviceTable;
+    }
+
+    /**
+     *生成sensor-module chain
+     */
+    public Map<String, Map<Integer, List<String>>> generChain(){
+        AreaOfDevice area = areas.get(0);
+        Map<String, Map<Integer, List<String>>> result1 = new HashMap<>();
+        List<FogDevice> devices = new ArrayList<>();
+        for(FogDevice d : area.getArea()){
+            devices.add(d);
+        }
+        FogDevice dd = area.getArea().get(0);
+        boolean flag = true;
+        int Max = area.getArea().size();
+        //将Area内以及上级的device都纳入范围
+        while(flag){
+            dd = getDeviceById(dd.getParentId());
+            //System.out.println("begin div   " + dd.getName());
+            if(dd.getName().equals("cloud")){//向上寻找所有上级device
+                flag = false;
+            }
+            devices.add(dd);
+            Max++;
+        }
+        //切记前面的device为低层级的 后面的为高层级的
+        for(Application app:getApplications()){
+            int max = Max-1;//初始max代表所有device
+            int min = 0;
+            Map<Integer,List<String>> modulemap = new HashMap<Integer, List<String>>();  //每一个sensor链的module应映射方案  链是对照APPedge的顺序而定的  刨除了sensor和actuators
+            for(FogDevice de: area.getArea()) {
+                List<Sensor> sensorOfde = sensorsOfDevcie.get(de.getId());
+                for (Sensor sen : sensorOfde) {
+
+                    if (sen.getTupleType().equals(app.getEdges().get(0).getSource())) {
+                        List<String> de2place = new ArrayList<>();
+                        int numOfArea = area.getArea().size();
+                        int mid = numOfArea;
+                        int temp = mid;
+                        List<String> hasPlacedModules = new ArrayList<>();
+                        for(String ss : placedModules){
+                            hasPlacedModules.add(ss);
+                        }
+                        for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
+                            if (!hasPlacedModules.contains(edge.getDestination())) {
+
+                                de2place.add(edge.getDestination());
+                                hasPlacedModules.add(edge.getDestination());
+                            }
+                        }
+                        modulemap.put(sen.getId(), de2place);
+                        min = 0;
+                    }
+
+                }
+            }
+            result1.put(app.getAppId(), modulemap);
+        }
+
+        return result1;
     }
 
     public List<FogDevice> getFogDevices() {

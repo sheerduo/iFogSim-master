@@ -149,6 +149,7 @@ public class MyFogDevice extends FogDevice{
             return false;
         }
         Map<String, Integer> chainMap = tuple.getChainMap();
+        //System.out.println("初始： " + tuple.getSrcModuleName());
         int targetDevice = chainMap.get(tuple.getDestModuleName());
 
     /*    int sourceSensor = tuple.getSourceSensor();

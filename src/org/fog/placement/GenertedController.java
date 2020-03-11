@@ -1,6 +1,5 @@
 package org.fog.placement;
 
-import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.Application;
@@ -11,8 +10,6 @@ import org.fog.entities.Sensor;
 import org.fog.test.perfeval.test3;
 import org.fog.utils.*;
 
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +18,7 @@ public class GenertedController extends Controller {
     public test3 App = new test3();
 
     private int num = 0;
-    private PlaceMappingGenerted placeMappingGenerted;
+    public PlaceMappingGenerted placeMappingGenerted;
     private List<Application> apps ;
 
     Map<String, ModuleMapping> moduleMappings;
@@ -36,9 +33,13 @@ public class GenertedController extends Controller {
 
     }
 
-    public void startGenerted(){
+    public void startGenerted(boolean isFirst, List<FogDevice> deviceTable, Map<String, Map<Integer, List<String>>> sensor_moduleChain){
         //CloudSim.startSimulation();
-        SA_method(20000, 5000, 50, 0.9);
+        if(isFirst) {
+            firstGener(deviceTable, sensor_moduleChain);
+        }else {
+            Gener(deviceTable, sensor_moduleChain);
+        }
     }
 
     @Override
@@ -94,48 +95,20 @@ public class GenertedController extends Controller {
 
     }
 
-    public void SA_method(double tem,int T,int N,double q) {
+    public void firstGener(List<FogDevice> deviceTable, Map<String, Map<Integer, List<String>>> sensor_moduleChain) {
         List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
         for(int i=0;i<mapList.size();i++){
             submitApplication(apps.get(i), mapList.get(i));
         }
         CloudSim.startSimulation();
-      /*  //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
-        int K=0;
-        int Loop;
-        int count=0;//记录随机变差过程中的接受次数
-        int best = Integer.MAX_VALUE;
-        while(K<T){
-            Loop=0;
-            while(Loop<N) {
-                //device 清空
+    }
 
-                List<ModulePlacement> mapList = placeMappingGenerted.generted();//产生新的邻域解
-                for(int i=0;i<mapList.size();i++){
-                    submitApplication(apps.get(i), mapList.get(i));
-                }
-                CloudSim.startSimulation();
-                //CloudSim.stopSimulation();
-                double value = valuePlacement();
-                if (value - best < 0) {
-                    if(Math.exp(0-(value/tem))>Math.random()) {
-                        count++;
-                        Loop++;
-                        //新解不优于  但决定向其他方向寻找
-                        //TODO
-                        //placeMappingGenerted.genertedPlacement();//生成新解
-                    }else{
-                        Loop++;
-                        //新解不优于 继续寻找
-                        //TODO
-                    }
-                } else {
-                    Loop++;
-                    //新解优于当前解  替换
-                    //TODO
-                }
-            }
-        }*/
+    public void Gener(List<FogDevice> deviceTable, Map<String, Map<Integer, List<String>>> sensor_moduleChain){
+        List<ModulePlacement> mapList = placeMappingGenerted.gener(deviceTable, sensor_moduleChain);//产生新的邻域解
+        for(int i=0;i<mapList.size();i++){
+            submitApplication(apps.get(i), mapList.get(i));
+        }
+        CloudSim.startSimulation();
     }
 
     /**
@@ -166,4 +139,8 @@ public class GenertedController extends Controller {
         }
     }
 
+    public Map<String, Map<Integer, List<String>>> generChain(){
+        //AreaOfDevice area = areas.get(0);
+        return placeMappingGenerted.generChain();
+    }
 }

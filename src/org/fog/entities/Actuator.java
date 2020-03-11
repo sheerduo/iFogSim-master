@@ -57,6 +57,7 @@ public class Actuator extends SimEntity{
 		//System.out.println("Received tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName() + ev.getSource());
 		String srcModule = tuple.getSrcModuleName();
 		String destModule = tuple.getDestModuleName();
+		int acutualSourceId = tuple.getSourceSensor();
 		Application app = getApp();
 		for(AppLoop loop : app.getLoops()){
 			if(loop.hasEdge(srcModule, destModule) && loop.isEndModule(destModule)){
@@ -76,6 +77,17 @@ public class Actuator extends SimEntity{
 				double newAverage = (currentAverage*currentCount + delay)/(currentCount+1);
 				TimeKeeper.getInstance().getLoopIdToCurrentAverage().put(loop.getLoopId(), newAverage);
 				TimeKeeper.getInstance().getLoopIdToCurrentNum().put(loop.getLoopId(), currentCount+1);
+
+				if(!TimeKeeper.getInstance().getSensorIdToActuator().containsKey(acutualSourceId)){
+					TimeKeeper.getInstance().getSensorIdToActuator().put(acutualSourceId, 0.0);
+					TimeKeeper.getInstance().getSensorIdToNum().put(acutualSourceId, 0);
+				}
+				currentAverage = TimeKeeper.getInstance().getSensorIdToActuator().get(acutualSourceId);
+				currentCount = TimeKeeper.getInstance().getSensorIdToNum().get(acutualSourceId);
+				newAverage = (currentAverage*currentCount + delay)/(currentCount+1);
+				//System.out.println("真实源   " + acutualSourceId);
+				TimeKeeper.getInstance().getSensorIdToActuator().put(acutualSourceId, newAverage);
+				TimeKeeper.getInstance().getSensorIdToNum().put(acutualSourceId, currentCount+1);
 				break;
 			}
 		}

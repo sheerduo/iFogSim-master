@@ -44,6 +44,12 @@ public class test4 {
     protected static File file = new File("D:\\fog1\\fog2\\result.txt");
     protected static Writer out;
 
+    private static boolean firstTime = true;
+    private static Map<String, Map<Integer, List<String>>> sensor_moduleChain;
+    private static List<FogDevice> devcieTable;
+    private static GenertedController genertedController;
+
+    private static int numOfSensor = 12;
     static {
         try {
             out = new FileWriter(file);
@@ -56,25 +62,10 @@ public class test4 {
     public static void main(String[] args) throws IOException {
         Log.disable();
 
-        double tem = 20000;
-        int T = 5000;
+        double tem = 25000;
+        int T = 500;
         int N = 50;
         double q = 0.9;
-
-
-        /*int i = 0;
-        while (i++<100){
-            int num_user = 1; // number of cloud users
-            Calendar calendar = Calendar.getInstance();
-            boolean trace_flag = false; // mean trace events
-            CloudSim.init(num_user, calendar, trace_flag);
-            System.out.println("这是 i   " + i);
-            appInit();
-
-
-        }*/
-
-
 
         //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
         int K=0;
@@ -85,19 +76,15 @@ public class test4 {
         while(K<T) {
             Loop=0;
             while(Loop<N) {
-                //System.out.println("Loop     " + Loop);
-                //将当前解复制一份，为后续获取邻域解做准备
-                //执行一次逆转，获取邻域解
-
                 int num_user = 1; // number of cloud users
                 Calendar calendar = Calendar.getInstance();
                 boolean trace_flag = false; // mean trace events
                 CloudSim.init(num_user, calendar, trace_flag);
-                // System.out.println("这是 i   " + i);
                 appInit();
+                BestPlacement.setReplaceSensorChain(genertedController.placeMappingGenerted.generReplaceSensor(sensor_moduleChain));//保存记录不好的链子
                 CloudSim.stopSimulation();
                 edif = BestResult.getCurrentValue() - BestResult.getTempValue();
-                if(edif<=0) {
+                if(edif<=0&&TimeKeeper.getInstance().getSensorIdToActuator().keySet().size()>11) {//
                     Loop++;
                     BestResult.setTempValue(BestResult.getCurrentValue());
                     if(BestResult.getCurrentValue() < BestResult.getBestVaule()){
@@ -173,18 +160,29 @@ public class test4 {
             Map<String, ModuleMapping> mappings = new HashMap<>();
             mappings.put(application_d.getAppId(), moduleMapping_d);
             mappings.put(application_h.getAppId(), moduleMapping_h);
-            GenertedController genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, placedModules);
+            genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, placedModules);
+            if(sensor_moduleChain==null){
+                sensor_moduleChain =  genertedController.generChain();
+                System.out.println("链子:" + sensor_moduleChain);
+            }
+            if(devcieTable==null){
+                devcieTable = genertedController.placeMappingGenerted.generDeviceTable(areas.get(0));
+                System.out.println("设备列表：" + devcieTable);
+            }
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
-            genertedController.startGenerted();
+            genertedController.startGenerted(firstTime, devcieTable, sensor_moduleChain);
+            if(firstTime) {
+                firstTime = false;
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
     private static void createFogDevices() {
-        FogDevice cloud = createFogDevice("cloud", 44800, 40000, 100, 10000, 0, 0.01, 16*103, 16*83.25); // creates the fog device Cloud at the apex of the hierarchy with level=0
+        FogDevice cloud = createFogDevice("cloud", 50000, 40000, 100, 10000, 0, 0.01, 16*103, 16*83.25); // creates the fog device Cloud at the apex of the hierarchy with level=0
         cloud.setParentId(-1);
-        FogDevice proxy = createFogDevice("proxy-server", 2800, 4000, 10000, 10000, 1, 0.0, 107.339, 83.4333); // creates the fog device Proxy Server (level=1)
+        FogDevice proxy = createFogDevice("proxy-server", 2500, 4000, 10000, 10000, 1, 0.0, 107.339, 83.4333); // creates the fog device Proxy Server (level=1)
         proxy.setParentId(cloud.getId()); // setting Cloud as parent of the Proxy Server
         proxy.setUplinkLatency(50); // latency of connection from Proxy Server to the Cloud is 100 ms
 
@@ -194,13 +192,13 @@ public class test4 {
         List<FogDevice> gateways = new ArrayList<FogDevice>();
         List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
         List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
-        for(int i=0;i<2;i++){
+        for(int i=0;i<3;i++){
             FogDevice gateway = addGw1(i+"", proxy.getId()); // adding a fog device for every Gateway in physical topology. The parent of each gateway is the Proxy Server
             gateways.add(gateway);
             AreaFogDevices.add(gateway);
             neighbors.add(gateway.getSelfInfo());
         }
-        for(int i=0;i<6;i++){
+        for(int i=0;i<3;i++){
             FogDevice gateway = addGw2(i+"", proxy.getId()); // adding a fog device for every Gateway in physical topology. The parent of each gateway is the Proxy Server
             gateways.add(gateway);
             AreaFogDevices.add(gateway);
@@ -214,12 +212,12 @@ public class test4 {
     }
 
     private static FogDevice addGw1(String id, int parentId){
-        FogDevice dept = createFogDevice("dd-"+id, 5000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dd-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
-            int numofDc = 5;
+            int numofDc = 2;
             int numofHe = 1;
             //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
@@ -241,13 +239,13 @@ public class test4 {
         return dept;
     }
     private static FogDevice addGw2(String id, int parentId){
-        FogDevice dept = createFogDevice("dh-"+id, 5000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dh-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 2;
-            int numofHe = 5;
+            int numofHe = 2;
             //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
             String mobileId = id+"-"+i;
@@ -379,9 +377,9 @@ public class test4 {
         //application.addAppModule("Client1",1000,10,500, 0);
 
         application.addAppEdge("Heart_Sensor-1", "Client-1", 500, 250, "Heart_Sensor-1", Tuple.UP, AppEdge.SENSOR,999, 1);
-        application.addAppEdge("Client-1", "Data_filtering-1", 1000, 250, "raw_heart-1", Tuple.UP, AppEdge.MODULE,10, 2);
-        application.addAppEdge("Data_filtering-1", "Data_processing-1", 2750, 750, "filtered_heart-1", Tuple.UP, AppEdge.MODULE,10, 3);
-        application.addAppEdge("Data_processing-1", "Event_handler-1", 1500, 350, "analyzed_heart-1", Tuple.UP, AppEdge.MODULE,10, 4);
+        application.addAppEdge("Client-1", "Data_filtering-1", 1500, 250, "raw_heart-1", Tuple.UP, AppEdge.MODULE,10, 2);
+        application.addAppEdge("Data_filtering-1", "Data_processing-1", 3500, 750, "filtered_heart-1", Tuple.UP, AppEdge.MODULE,10, 3);
+        application.addAppEdge("Data_processing-1", "Event_handler-1", 3000, 350, "analyzed_heart-1", Tuple.UP, AppEdge.MODULE,10, 4);
         application.addAppEdge("Event_handler-1", "Client-1", 500, 250, "response_heart-1", Tuple.DOWN, AppEdge.MODULE,10,5);
         application.addAppEdge("Client-1", "Display-1", 250, 250, "display_data-1", Tuple.DOWN, AppEdge.ACTUATOR,10,1);
         ///application.addAppEdge("Event_handler", "Display", 500, 500, "response_heart", Tuple.DOWN, AppEdge.ACTUATOR);
@@ -410,9 +408,9 @@ public class test4 {
         //application.addAppModule("Client1",1000,10,500, 0);
 
         application.addAppEdge("Heart_Sensor", "Client", 1000, 500, "Heart_Sensor", Tuple.UP, AppEdge.SENSOR,999, 1);
-        application.addAppEdge("Client", "Data_filtering", 2000, 500, "raw_heart", Tuple.UP, AppEdge.MODULE,10, 2);
-        application.addAppEdge("Data_filtering", "Data_processing", 5500, 1500, "filtered_heart", Tuple.UP, AppEdge.MODULE,10, 3);
-        application.addAppEdge("Data_processing", "Event_handler", 3000, 700, "analyzed_heart", Tuple.UP, AppEdge.MODULE,10, 4);
+        application.addAppEdge("Client", "Data_filtering", 4000, 500, "raw_heart", Tuple.UP, AppEdge.MODULE,10, 2);
+        application.addAppEdge("Data_filtering", "Data_processing", 6000, 1500, "filtered_heart", Tuple.UP, AppEdge.MODULE,10, 3);
+        application.addAppEdge("Data_processing", "Event_handler", 5000, 700, "analyzed_heart", Tuple.UP, AppEdge.MODULE,10, 4);
         application.addAppEdge("Event_handler", "Client", 1000, 500, "response_heart", Tuple.DOWN, AppEdge.MODULE,10,5);
         application.addAppEdge("Client", "Display", 500, 500, "display_data", Tuple.DOWN, AppEdge.ACTUATOR,10,1);
         ///application.addAppEdge("Event_handler", "Display", 500, 500, "response_heart", Tuple.DOWN, AppEdge.ACTUATOR);
