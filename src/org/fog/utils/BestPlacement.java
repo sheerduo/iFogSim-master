@@ -18,7 +18,7 @@ public class BestPlacement {
     private static List<ModuleMapping> tepMapping = null;
     private static Map<String, List<Integer>> replaceSensorChain = null;
     private static String temTime;
-    protected static File file = new File("D:\\fog1\\fog2\\result.txt");
+    protected static File file = new File("D:\\fog1\\fog4\\result.txt");
     protected static Writer out;
 
     static {

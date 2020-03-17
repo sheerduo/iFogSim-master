@@ -93,6 +93,7 @@ public class Sensor extends SimEntity{
 		tuple.setTupleType(getTupleType());
 		tuple.setAcutualsource(this.getId());
 		tuple.setDestModuleName(_edge.getDestination());
+		tuple.setSourceDeviceId(this.getGatewayDeviceId());
 		tuple.setSrcModuleName(getSensorName());
 		tuple.setDeadline(deadline);
 		tuple.setLevel(level);

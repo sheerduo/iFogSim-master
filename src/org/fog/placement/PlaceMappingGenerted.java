@@ -86,6 +86,13 @@ public class PlaceMappingGenerted extends ModulePlacement{
         }
 
         Map<String, Map<Integer, Map<String, Integer>>> templeChain = BestPlacement.getTepTupleChain();
+        for(String appname : templeChain.keySet()){
+            System.out.println("appname:  ");
+            Map<Integer, Map<String, Integer>> chain = templeChain.get(appname);
+            for(Integer s : chain.keySet()){
+                System.out.println(s + " : " + chain.get(s));
+            }
+        }
         Map<String, List<Integer>> replaceChain = BestPlacement.getReplaceSensorChain();
         for(String app : replaceChain.keySet()){
             List<Integer> replaceSensor = replaceChain.get(app);
@@ -104,45 +111,93 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         ran = random.nextInt(Max)+1;
                         tempRan = ran;
                        // System.out.println( "  ranA " + ran);
-                        /*if(ran>mid){
+                        if(ran>mid){
                             temp=Max;
-                        }*/
+                        }
+
                         flag=false;
                     }else {//其它次
-                        int gai = random.nextInt(100);
+                        //ran = random.nextInt(Max) + 1;
+                        //ran = random.nextInt(Max-1) + 1;
+                       // int gai = random.nextInt(100);
 
-                        if(gai>70){
-                            /*int gai1 = random.nextInt(100);
-                            if(gai1>70) {*/
-                                ran = random.nextInt(Max-1) + 1;
-                                tempRan = ran;
-                                /*if (temp == 0) {
-                                    ran = random.nextInt(Max-1) + 1;
-                                    tempRan = ran;
-                                    //System.out.println( "  ranB " + ran);
-                                } else {
-                                    ran = temp;
-                                }*/
-                            /*}else {
-                                ran = tempRan;
-                            }*/
+                        if(temp==0){
+
+                            ran = random.nextInt(Max) + 1;
+                            if(ran>mid){
+                                temp=Max;
+                            }
                         }else {
                             ran = Max;
-                            //temp = Max;
                         }
                     }
-                    //System.out.println("deviceTable size  " + deviceTable.size() + "  ran " + ran);
                    chain.put(module, deviceTable.get(ran-1).getId());
                 }
                 templeChain.get(app).put(sensorId, chain);
             }
         }
+
         int numOfApp = 0;
         Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>(); //Integer- sensorId   String - moduleMap  Integer-deviceId
         for(String appname : templeChain.keySet()){
             //Map<Integer, Map<String, Integer>> sensorChain = new HashMap<>();
             Map<Integer, Map<String, Integer>> mm = templeChain.get(appname);//从生成的结果中取出的
             ModuleMapping moduleMapping = moduleMappingList.get(numOfApp);
+            for(Integer sensorId : mm.keySet()){
+                Map<String, Integer> moduleChain2Device = new HashMap<>();//要放入sensor的
+                Map<String, Integer> module_dev = mm.get(sensorId);
+                Application app = applications.get(numOfApp);
+                for(Sensor sensor : getSensors()){
+                    if (sensor.getId() == sensorId){
+                        int gatewayId = sensor.getGatewayDeviceId();
+                        String gatewayName = getDeviceById(gatewayId).getName();
+                        List<String> modNames = moduleMapping.getModuleMapping().get(gatewayName);
+                        moduleChain2Device.put(modNames.get(0), gatewayId);
+                    }
+                }
+
+                for(String moduleName : module_dev.keySet()){
+                    moduleMapping.addModuleToDevice(moduleName, getDeviceById(module_dev.get(moduleName)).getName());
+                    moduleChain2Device.put(moduleName, module_dev.get(moduleName));
+                }
+                //sensorChain.put(sensorId, moduleChain2Device);
+                sensorModuleChaineMap.put(sensorId, moduleChain2Device);
+            }
+            //sensorModuleChaineMap.put(appname, sensorChain);
+            numOfApp++;
+        }
+        BestPlacement.setTepTupleChain(templeChain);
+        for (FogDevice device : areas.get(0).getArea()) {
+            List<Sensor> sensors = sensorsOfDevcie.get(device.getId());
+            for (Sensor sensor1 : sensors) {
+                //if(chain.keySet().contains(sensor1.getId())) {
+                sensor1.setChainMap(sensorModuleChaineMap.get(sensor1.getId()));
+                //}
+            }
+        }
+
+        BestPlacement.setTepMapping(moduleMappingList);
+        List<ModulePlacement> modulePlacementList = new ArrayList<>();
+        for(int i=0;i<2;i++){
+            ModulePlacement modulePlacement1 = new ModulePlacementMapping(fogDevices, applications.get(i), moduleMappingList.get(i));
+            modulePlacement1.mapModules();
+            modulePlacementList.add(modulePlacement1);
+        }
+        return modulePlacementList;
+    }
+
+    public List<ModulePlacement> placeStatic(Map<String, Map<Integer, Map<String, Integer>>> templeChain){
+        List<ModuleMapping> moduleMappingList = new ArrayList<>();
+        for(String appName : getModuleMappings().keySet()){ //将已放置的放入
+            moduleMappingList.add(getModuleMappings().get(appName));
+        }
+        int numOfApp = 0;
+        Map<Integer, Map<String, Integer>> sensorModuleChaineMap = new HashMap<>();
+        for(String appname : templeChain.keySet()){
+            //Map<Integer, Map<String, Integer>> sensorChain = new HashMap<>();
+            Map<Integer, Map<String, Integer>> mm = templeChain.get(appname);//从生成的结果中取出的
+            ModuleMapping moduleMapping = moduleMappingList.get(numOfApp);
+
             for(Integer sensorId : mm.keySet()){
                 Map<String, Integer> moduleChain2Device = new HashMap<>();//要放入sensor的
                 Map<String, Integer> module_dev = mm.get(sensorId);
@@ -308,8 +363,12 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         }
                         for (AppEdge edge : app.getEdges()) {//placeedModules提前只能指定底层级的       appedge的最后一个一定是actuator
                             if (!hasPlacedModules.contains(edge.getDestination())) {
-                                if(temp==0) {
-                                    int ran = random.nextInt(Max)+1;
+                                int terminalId = sen.getGatewayDeviceId();
+                                FogDevice terminal = getDeviceById(terminalId);
+                                de2place.put(edge.getDestination(), terminal.getParentId());
+                                hasPlacedModules.add(edge.getDestination());
+                                /*if(temp==0) {
+                                    int ran = random.nextInt(Max-1)+1;
                                     if (ran > mid) {
                                         temp = Max;
                                     }
@@ -319,7 +378,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
                                 }else{
                                     de2place.put(edge.getDestination(), devices.get(temp-1).getId());
                                     hasPlacedModules.add(edge.getDestination());
-                                }
+                                }*/
                             }
                         }
                         modulemap.put(sen.getId(), de2place);
@@ -386,7 +445,7 @@ public class PlaceMappingGenerted extends ModulePlacement{
         Set<String> apps = chain.keySet();
 
         for(Integer sensor111 :  TimeKeeper.getInstance().getSensorIdToActuator().keySet()){
-            System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111));
+            System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111) + "  num: " + TimeKeeper.getInstance().getSensorIdToNum().get(sensor111));
         }
 
         for(String app:apps){
@@ -439,6 +498,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
                         }
                     }
                 }
+            }
+            if(app.equals("DCNSFog")){
+                sensorsToReplace = new ArrayList<>();
             }
             rePlaceSensor.put(app, sensorsToReplace);
         }

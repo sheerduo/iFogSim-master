@@ -14,21 +14,23 @@ import org.fog.application.AppLoop;
 import org.fog.application.Application;
 import org.fog.application.selectivity.FractionalSelectivity;
 import org.fog.entities.*;
+import org.fog.placement.Controller;
 import org.fog.placement.GenertedController;
 import org.fog.placement.ModuleMapping;
+import org.fog.placement.ModulePlacementEdgewards;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
-import org.fog.utils.*;
+import org.fog.utils.FogLinearPowerModel;
+import org.fog.utils.FogUtils;
+import org.fog.utils.NeighborInArea;
+import org.fog.utils.TimeKeeper;
 import org.fog.utils.distribution.DeterministicDistribution;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-public class test4 {
-
+public class testplace {
     static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_D = new ArrayList<FogDevice>();
     static List<FogDevice> mobiles_H = new ArrayList<FogDevice>();
@@ -41,7 +43,7 @@ public class test4 {
     private static List<AreaOfDevice> areas = new ArrayList<AreaOfDevice>();
 
     static int sensorNum = 0;
-    protected static File file = new File("D:\\fog1\\fog4\\result.txt");
+    protected static File file = new File("D:\\fog1\\fog2\\result.txt");
     protected static Writer out;
 
     private static boolean firstTime = true;
@@ -50,81 +52,19 @@ public class test4 {
     private static GenertedController genertedController;
 
     private static int numOfSensor = 12;
-    static {
+
+    public static void main(String[] args) {
+
+        Log.printLine("Starting TwoApps...");
+
         try {
-            out = new FileWriter(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+            Log.disable();
+            int num_user = 1; // number of cloud users
+            Calendar calendar = Calendar.getInstance();
+            boolean trace_flag = false; // mean trace events
 
+            CloudSim.init(num_user, calendar, trace_flag);
 
-    public static void main(String[] args) throws IOException {
-        Log.disable();
-
-        double tem = 25000;
-        int T = 125;
-        int N = 40;
-        double q = 0.9;
-
-        //tem为初始最大温度，T为外循环次数，N为内循环次数,q为降温系数
-        int K=0;
-        int Loop=0;
-        int count=0;//记录随机变差过程中的接受次数
-        double edif=0;//这是新解与旧解的差值
-        //准备完毕，外循环开始
-        while(K<T) {
-            Loop=0;
-            while(Loop<N) {
-                int num_user = 1; // number of cloud users
-                Calendar calendar = Calendar.getInstance();
-                boolean trace_flag = false; // mean trace events
-                CloudSim.init(num_user, calendar, trace_flag);
-                appInit();
-                BestPlacement.setReplaceSensorChain(genertedController.placeMappingGenerted.generReplaceSensor(sensor_moduleChain));//保存记录不好的链子
-                CloudSim.stopSimulation();
-                edif = BestResult.getCurrentValue() - BestResult.getTempValue();
-                if(edif<=0&&TimeKeeper.getInstance().getSensorIdToActuator().keySet().size()>11) {//&&TimeKeeper.getInstance().getSensorIdToActuator().keySet().size()>11
-                    Loop++;
-                    BestResult.setTempValue(BestResult.getCurrentValue());
-                    if(BestResult.getCurrentValue() < BestResult.getBestVaule()){
-                        BestResult.setBestVaule(BestResult.getCurrentValue());
-                        BestPlacement.saveBestTime();
-                        BestPlacement.setBestMapping(BestPlacement.getTepMapping());
-                        BestPlacement.setBestTupleChain(BestPlacement.getTepTupleChain());
-                        BestPlacement.saveResult();
-                    }
-                    //让这个邻域解的评价值取代旧解，并且把终止序列也一并取代
-                }else {
-                    if(Math.exp(0-(edif/tem))>Math.random()) {
-                        count++;
-                        Loop++;
-                        BestResult.setTempValue(BestResult.getCurrentValue());
-                    }else {
-                        Loop++;
-                    }
-                }
-                System.out.println("current loop: " + (K*40+Loop) + "   the best value : " + BestResult.getBestVaule() + "  Temp value :" + BestResult.getTempValue() + " current value :" + BestResult.getCurrentValue());
-
-            }
-            K++;
-            tem=q*tem;//等比例降温，有需要时，此温度能作为跳出外循环的控制条件
-        }
-        System.out.println("the best value : " + BestResult.getBestVaule());
-
-        System.exit(0);
-    }
-
-    public static void appInit(){
-        try {
-            FogUtils.initFogUtils();
-            areas.clear();
-            fogDevices.clear();
-            mobiles_D.clear();
-            mobiles_H.clear();
-            sensors.clear();
-            actuators.clear();
-            TimeKeeper.getInstance().init();
             String appId0 = "DCNSFog";
             String appId1 = "HealthCareSystem";
 
@@ -137,10 +77,18 @@ public class test4 {
             createFogDevices();
 
             createDCNSDevices(broker0.getId(), appId0);
-            createHealthCareDevices(broker1.getId(), appId1);
+            createHealthCareDevices(broker1.getId(),appId1);
 
             ModuleMapping moduleMapping_d = ModuleMapping.createModuleMapping(); // initializing a module mapping
             ModuleMapping moduleMapping_h = ModuleMapping.createModuleMapping(); // initializing a module mapping
+
+            List<Application> apps = new ArrayList<>();
+            apps.add(application_d);
+            apps.add(application_h);
+            Map<String, ModuleMapping> mappings = new HashMap<>();
+            mappings.put(application_d.getAppId(), moduleMapping_d);
+            mappings.put(application_h.getAppId(), moduleMapping_h);
+
             for(FogDevice device : fogDevices) {
                 if (device.getName().startsWith("md")) {
                     moduleMapping_d.addModuleToDevice("Client-1", device.getName());  // fixing all instances of the Client module to the Smartphones
@@ -154,33 +102,149 @@ public class test4 {
             placedModules.add("Display");
             placedModules.add("Client-1");
             placedModules.add("Display-1");
-            List<Application> apps = new ArrayList<>();
-            apps.add(application_d);
-            apps.add(application_h);
-            Map<String, ModuleMapping> mappings = new HashMap<>();
+            List<Application> apps1 = new ArrayList<>();
+            apps1.add(application_d);
+            apps1.add(application_h);
             mappings.put(application_d.getAppId(), moduleMapping_d);
             mappings.put(application_h.getAppId(), moduleMapping_h);
-            genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps, mappings , areas, placedModules);
-            if(sensor_moduleChain==null){
-                sensor_moduleChain =  genertedController.generChain();
-                System.out.println("链子:" + sensor_moduleChain);
-            }
-            if(devcieTable==null){
-                devcieTable = genertedController.placeMappingGenerted.generDeviceTable(areas.get(0));
-                System.out.println("设备列表：" + devcieTable);
-            }
+
+            Map<String, Map<Integer, Map<String, Integer>>> sensorChain = new HashMap<>();
+           for(Application a: apps){
+               sensorChain.put(a.getAppId(), new HashMap<>());
+           }
+           Map<String, Integer> chain = new HashMap<>();
+            chain.put("Data_filtering-1", 18);
+            chain.put("Data_processing-1", 12);
+            chain.put("Event_handler-1", 12);
+            sensorChain.get(apps.get(0).getAppId()).put(27, chain);
+
+            chain.put("Data_filtering-1", 9);
+            chain.put("Data_processing-1", 21);
+            chain.put("Event_handler-1", 12);
+            sensorChain.get(apps.get(0).getAppId()).put(29, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 12);
+            chain.put("Data_processing-1", 9);
+            chain.put("Event_handler-1", 18);
+            sensorChain.get(apps.get(0).getAppId()).put(31, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 18);
+            chain.put("Data_processing-1", 12);
+            chain.put("Event_handler-1", 12);
+            sensorChain.get(apps.get(0).getAppId()).put(33, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 25);
+            chain.put("Data_processing-1", 15);
+            chain.put("Event_handler-1", 6);
+            sensorChain.get(apps.get(0).getAppId()).put(35, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 18);
+            chain.put("Data_processing-1", 21);
+            chain.put("Event_handler-1", 15);
+            sensorChain.get(apps.get(0).getAppId()).put(37, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 18);
+            chain.put("Data_processing-1", 9);
+            chain.put("Event_handler-1", 21);
+            sensorChain.get(apps.get(0).getAppId()).put(39, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 12);
+            chain.put("Data_processing-1", 6);
+            chain.put("Event_handler-1", 21);
+            sensorChain.get(apps.get(0).getAppId()).put(41, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 12);
+            chain.put("Data_processing-1", 21);
+            chain.put("Event_handler-1", 18);
+            sensorChain.get(apps.get(0).getAppId()).put(43, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering-1", 12);
+            chain.put("Data_processing-1", 9);
+            chain.put("Event_handler-1", 18);
+            sensorChain.get(apps.get(0).getAppId()).put(45, chain);
+
+
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering", 21);
+            chain.put("Data_processing", 15);
+            chain.put("Event_handler", 15);
+            sensorChain.get(apps.get(1).getAppId()).put(47, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering", 18);
+            chain.put("Data_processing", 18);
+            chain.put("Event_handler", 12);
+            sensorChain.get(apps.get(1).getAppId()).put(49, chain);
+
+            chain = new HashMap<>();
+            chain.put("Data_filtering", 15);
+            chain.put("Data_processing", 4);
+            chain.put("Event_handler", 4);
+            sensorChain.get(apps.get(1).getAppId()).put(51, chain);
+
+
+
+
+
+
+           /*for(Sensor sensor : sensors){
+                if(sensor.getAppId().equals(appId0)){
+                    Map<String, Integer> chain = new HashMap<>();
+                    int fatherId=0;
+                    for(FogDevice device : fogDevices){
+                        if (device.getId()==sensor.getGatewayDeviceId()){
+                            fatherId = device.getParentId();
+                            break;
+                        }
+                    }
+                    if(sensor.getId()==24) {
+                        chain.put("Data_filtering-1", 6);
+                        chain.put("Data_processing-1", 9);
+                        chain.put("Event_handler-1", 12);
+                    }else {
+                        chain.put("Data_filtering-1", 4);
+                        chain.put("Data_processing-1", 4);
+                        chain.put("Event_handler-1", 4);
+                    }
+                    sensorChain.get(appId0).put(sensor.getId(), chain);
+                }else {
+                    Map<String, Integer> chain = new HashMap<>();
+                    chain.put("Data_filtering", 4);
+                    chain.put("Data_processing", 4);
+                    chain.put("Event_handler", 4);
+                    sensorChain.get(appId1).put(sensor.getId(), chain);
+                }
+           }*/
+
+            genertedController = new GenertedController("generted", fogDevices, sensors, actuators, apps1, mappings , areas, placedModules);
+
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
-            genertedController.startGenerted(firstTime, devcieTable, sensor_moduleChain);
-            if(firstTime) {
-                firstTime = false;
+
+            genertedController.startStaticGenerted(sensorChain);
+            for(Integer sensor111 :  TimeKeeper.getInstance().getSensorIdToActuator().keySet()){
+                System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111) + "  num: " + TimeKeeper.getInstance().getSensorIdToNum().get(sensor111));
             }
-        }catch (Exception e){
+            genertedController.printNetworkUsageDetails();
+            genertedController.printCostDetails();
+            genertedController.printPowerDetails();
+            CloudSim.stopSimulation();
+
+        }catch (Exception e) {
             e.printStackTrace();
+            Log.printLine("Unwanted errors happen");
         }
     }
-
     private static void createFogDevices() {
-        FogDevice cloud = createFogDevice("cloud", 50000, 40000, 100, 10000, 0, 0.01, 16*103, 16*83.25); // creates the fog device Cloud at the apex of the hierarchy with level=0
+        FogDevice cloud = createFogDevice("cloud", 50000, 40000, 10000, 10000, 0, 0.01, 16*103, 16*83.25); // creates the fog device Cloud at the apex of the hierarchy with level=0
         cloud.setParentId(-1);
         FogDevice proxy = createFogDevice("proxy-server", 2500, 4000, 10000, 10000, 1, 0.0, 107.339, 83.4333); // creates the fog device Proxy Server (level=1)
         proxy.setParentId(cloud.getId()); // setting Cloud as parent of the Proxy Server
@@ -212,7 +276,7 @@ public class test4 {
     }
 
     private static FogDevice addGw1(String id, int parentId){
-        FogDevice dept = createFogDevice("dd-"+id, 2800, 4000, 10000, 10000, 2, 0.0, 104.339, 83.4333);
+        FogDevice dept = createFogDevice("dd-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
@@ -230,7 +294,7 @@ public class test4 {
                 //AreaFogDevices.add(mobile_d);
                 neighbors.add(mobile_d.getSelfInfo());
             }
-           // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+            // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
             //areas.add(areaOfDevice);
            /* for(FogDevice fog : AreaFogDevices){
                 fog.setNeighbors(neighbors);
@@ -239,13 +303,13 @@ public class test4 {
         return dept;
     }
     private static FogDevice addGw2(String id, int parentId){
-        FogDevice dept = createFogDevice("dh-"+id, 6000, 4000, 10000, 10000, 2, 0.0, 143.339, 83.4333);
+        FogDevice dept = createFogDevice("dh-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 2;
-            int numofHe = 4;
+            int numofHe = 1;
             //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
             String mobileId = id+"-"+i;
@@ -257,8 +321,8 @@ public class test4 {
                 //AreaFogDevices.add(mobile_h);
                 neighbors.add(mobile_h.getSelfInfo());
             }
-           // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
-           // areas.add(areaOfDevice);
+            // AreaOfDevice areaOfDevice = new AreaOfDevice(AreaFogDevices);
+            // areas.add(areaOfDevice);
             /*for(FogDevice fog : AreaFogDevices){
                 fog.setNeighbors(neighbors);
             }*/
@@ -267,7 +331,7 @@ public class test4 {
     }
 
     private static FogDevice addMobile_D(String id, int parentId){
-        FogDevice mobile = createFogDevice("md-"+id, 5000, 1000, 10000, 270, 3, 0, 87.53, 82.44);
+        FogDevice mobile = createFogDevice("md-"+id, 3000, 1000, 10000, 270, 3, 0, 87.53, 82.44);
         mobile.setParentId(parentId);
         mobiles_D.add(mobile);
         return mobile;
@@ -428,3 +492,4 @@ public class test4 {
         return application;
     }
 }
+

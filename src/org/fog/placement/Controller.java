@@ -118,7 +118,7 @@ public class Controller extends SimEntity{
         }
     }
 	
-	private void printNetworkUsageDetails() {
+	public void printNetworkUsageDetails() {
 		System.out.println("Total network usage = "+NetworkUsageMonitor.getNetworkUsage()/Config.MAX_SIMULATION_TIME);		
 	}
 
@@ -129,11 +129,11 @@ public class Controller extends SimEntity{
 		return null;
 	}
 	
-	private void printCostDetails(){
+	public void printCostDetails(){
 		System.out.println("Cost of execution in cloud = "+getCloud().getTotalCost());
 	}
 	
-	private void printPowerDetails() {
+	public void printPowerDetails() {
 		for(FogDevice fogDevice : getFogDevices()){
 			System.out.println(fogDevice.getName() + " : Energy Consumed = "+fogDevice.getEnergyConsumption());
 		}

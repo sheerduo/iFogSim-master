@@ -20,7 +20,7 @@ public class Tuple extends Cloudlet{
 	private int actualTupleId;
 	private int direction;
 	private int actuatorId;
-	private int sourceDeviceId;
+	private int sourceDeviceId=-1;
 	private int sourceModuleId;
 
 	private int fromneighbor = -1;
@@ -48,7 +48,7 @@ public class Tuple extends Cloudlet{
 		//System.out.println("cloudletFileSize   " + cloudletFileSize);
 		setAppId(appId);
 		setDirection(direction);
-		setSourceDeviceId(-1);
+		//setSourceDeviceId(-1);
 		setModuleCopyMap(new HashMap<String, Integer>());
 	}
 
@@ -63,7 +63,7 @@ public class Tuple extends Cloudlet{
         //System.out.println("cloudletFileSize   " + cloudletFileSize);
         setAppId(appId);
         setDirection(direction);
-        setSourceDeviceId(-1);
+        //setSourceDeviceId(-1);
         setModuleCopyMap(new HashMap<String, Integer>());
         setDeadline(deadline);
         setLevel(level);

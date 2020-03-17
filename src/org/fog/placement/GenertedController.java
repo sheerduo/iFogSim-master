@@ -26,6 +26,7 @@ public class GenertedController extends Controller {
     public GenertedController(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators, List<Application> apps, Map<String, ModuleMapping> moduleMappings, List<AreaOfDevice> areas, List<String> placedModules){
         super(name, fogDevices, sensors, actuators);
         this.apps = apps;
+        this.areas = areas;
         placeMappingGenerted = new PlaceMappingGenerted(fogDevices, sensors, actuators ,apps, moduleMappings, areas, placedModules);
     }
 
@@ -41,7 +42,10 @@ public class GenertedController extends Controller {
             Gener(deviceTable, sensor_moduleChain);
         }
     }
-
+    public void startStaticGenerted(Map<String, Map<Integer, Map<String, Integer>>> sensor_moduleChain){
+        //CloudSim.startSimulation();
+        Geners(sensor_moduleChain);
+    }
     @Override
     public void startEntity() {
         for(String appId : applications.keySet()){
@@ -111,6 +115,14 @@ public class GenertedController extends Controller {
         CloudSim.startSimulation();
     }
 
+    public void Geners(Map<String, Map<Integer, Map<String, Integer>>> sensor_moduleChain){
+        List<ModulePlacement> mapList = placeMappingGenerted.placeStatic(sensor_moduleChain);//产生新的邻域解
+        for(int i=0;i<mapList.size();i++){
+            submitApplication(apps.get(i), mapList.get(i));
+        }
+        CloudSim.startSimulation();
+    }
+
     /**
      * 评价函数
      * @return
@@ -129,7 +141,24 @@ public class GenertedController extends Controller {
             TimeKeeper.getInstance().getLoopIdToCurrentAverage().put(loopId, 0.0);
             TimeKeeper.getInstance().getLoopIdToCurrentNum().put(loopId, 0);
         }
-        return value;
+
+        double energy = 0.0;
+        double totalennergy = 0.0;
+        for(AreaOfDevice area : areas){
+           List<FogDevice> devices = area.getArea();
+           for(FogDevice de : devices){
+               energy+=de.getEnergyConsumption()/40000;
+               totalennergy += de.getEnergyConsumption();
+           }
+        }
+
+       // energy += placeMappingGenerted.getDeviceByName("cloud").getEnergyConsumption()/70000;
+        System.out.println("energy: " + energy + "   value: " + value  + " edge server energy: " + totalennergy + "  cloud energy: " + placeMappingGenerted.getDeviceByName("cloud").getEnergyConsumption());
+        energy = energy/(areas.get(0).getArea().size());
+        value = value/200;
+
+        double result = 0.7*energy + 0.3*value;
+        return result;
     }
 
     private void clearDeviceAppMap(){

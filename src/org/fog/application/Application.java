@@ -268,7 +268,7 @@ public class Application {
 							tuple.setSrcModuleName(edge.getSource());
 							tuple.setDirection(Tuple.ACTUATOR);
 							tuple.setTupleType(edge.getTupleType());
-							tuple.setSourceDeviceId(sourceDeviceId);
+							tuple.setSourceDeviceId(inputTuple.getSourceDeviceId());
 							tuple.setSourceModuleId(sourceModuleId);
 							tuple.setDeadline(edge.getDeadline());
 							tuple.setLevel(edge.getLevel());
@@ -294,7 +294,9 @@ public class Application {
 						tuple.setAppId(inputTuple.getAppId());
 						tuple.setDestModuleName(edge.getDestination());
 						tuple.setSrcModuleName(edge.getSource());
+						tuple.setAcutualsource(inputTuple.getAcutualsource());
 						tuple.setDirection(edge.getDirection());
+						tuple.setSourceDeviceId(inputTuple.getSourceDeviceId());
 						tuple.setTupleType(edge.getTupleType());
 						tuple.setSourceModuleId(sourceModuleId);
 						tuple.setDeadline(edge.getDeadline());

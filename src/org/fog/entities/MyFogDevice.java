@@ -2,14 +2,12 @@ package org.fog.entities;
 
 import org.apache.commons.math3.util.Pair;
 import org.cloudbus.cloudsim.*;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppModule;
 import org.fog.application.Application;
-import org.fog.utils.BestResult;
-import org.fog.utils.FogEvents;
-import org.fog.utils.Logger;
-import org.fog.utils.TimeKeeper;
+import org.fog.utils.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -124,12 +122,16 @@ public class MyFogDevice extends FogDevice{
                         }
                         Application application = getApplicationMap().get(tuple.getAppId());
                         Logger.debug(getName(), "Completed execution of tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
+
+                        //System.out.println(tuple.getAcutualsource() + " source " +getName() + "   delay: " + tuple.getDestModuleName() + "  " + tuple.getDirection() + "    " + (CloudSim.clock()-TimeKeeper.getInstance().getEmitTimes().get(tuple.getActualTupleId())));
                         //System.out.println(getName() + "  Completed execution of tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
-                        List<Tuple> resultantTuples = application.getResultantTuples(tuple.getDestModuleName(), tuple, getId(), vm.getId());
+                        List<Tuple> resultantTuples = application.getResultantTuples(tuple.getDestModuleName(), tuple, tuple.getSourceDeviceId(), vm.getId());
+                        /*if(tuple.getChainMap()!=null)
+                            System.out.println("source  " + tuple.getChainMap());*/
                         for(Tuple resTuple : resultantTuples){
                             resTuple.setModuleCopyMap(new HashMap<String, Integer>(tuple.getModuleCopyMap()));
                             resTuple.getModuleCopyMap().put(((AppModule)vm).getName(), vm.getId());
-                            canBeProcessedBySelf(resTuple);
+                            sendToSelf(resTuple);
                         }
                         sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
                     }
@@ -142,23 +144,64 @@ public class MyFogDevice extends FogDevice{
 
     @Override
     protected boolean canBeProcessedBySelf(SimEvent ev) {
+
         boolean result = false;
         Tuple tuple = (Tuple)ev.getData();
-        if(tuple.getDirection() == Tuple.ACTUATOR || tuple.getDirection() == Tuple.DOWN ){
+
+
+        /*if(tuple.getSourceDeviceId()!=-1){
+            System.out.println("source  " +  tuple.getSourceDeviceId() + "   module " + tuple.getDestModuleName());
+        }*/
+        if(tuple.getDirection() == Tuple.ACTUATOR){
             sendTupleToActuator(tuple);
             return false;
         }
-        Map<String, Integer> chainMap = tuple.getChainMap();
-        //System.out.println("初始： " + tuple.getSrcModuleName());
-        int targetDevice = chainMap.get(tuple.getDestModuleName());
 
-    /*    int sourceSensor = tuple.getSourceSensor();
-        String moduleName = tuple.getDestModuleName();*/
-        //System.out.println(this.getId() + "  sourceSensor:  " + sourceSensor + " moduleName  " + moduleName + " tuple.direction " + tuple.getDirection() + "  sensorModuleChainMap  " + sensorModuleChaineMap);
-       // int toDevcieId = sensorModuleChaineMap.get(sourceSensor).get(moduleName);
+
+        Map<String, Integer> chainMap = tuple.getChainMap();
+        //System.out.println("chainMap   " + chainMap);
+
+        int targetDevice = chainMap.get(tuple.getDestModuleName());
         if(targetDevice==this.getId()){
             processTupleArrival(ev);
             return true;
+        }
+
+        if(tuple.getDirection()==Tuple.DOWN){
+
+            if(this.getLevel()<2) {
+                if(tuple.getSourceSensor()==24){
+                    //System.out.println("hased");
+                }
+                for (int childId : getChildrenIds())
+                    sendDown(tuple, childId);
+                return false;
+            }else if(this.getChildrenIds().contains(tuple.getSourceDeviceId())){//是给自己的
+                if(tuple.getSourceSensor()==24){
+                    //System.out.println("hased");
+                }
+                    for(Integer child : getChildrenIds())
+                        sendDown(tuple, child);
+                    return false;
+            }else {
+                if(ev.getSource()==this.getId()){
+                    if(tuple.getSourceSensor()==24){
+                       // System.out.println("hased");
+                    }
+                    for(NeighborInArea neighborInArea :neighbors){
+                        sendNeighbor(tuple, neighborInArea.getId());
+                    }
+
+                }
+                return false;
+            }
+
+        }
+
+        if(tuple.getDirection()==Tuple.UP && this.getLevel()==3) {
+            //tuple.setAcutualsource(this.getParentId());
+            sendUp(tuple);
+            return false;
         }
         sendNeighbor(tuple, targetDevice);
         return false;
@@ -166,6 +209,27 @@ public class MyFogDevice extends FogDevice{
 
     protected boolean canBeProcessedBySelf(Tuple tuple){
         //int sourceSensor = tuple.getSourceSensor();
+        if(tuple.getDirection() == Tuple.ACTUATOR){ //
+            sendTupleToActuator(tuple);
+        }
+        if(tuple.getDirection() == Tuple.DOWN){
+            if(getLevel()!=2) {         //高级的发给孩子
+                //System.out.println("位置3");
+                for(Integer dd : getChildrenIds())
+                    sendDown(tuple, dd);
+                return false;
+            }
+            //System.out.println(tuple.getDestModuleName() + "  usde  " + this.getLevel());
+            if(tuple.getSourceDeviceId()==this.getId()){
+                //System.out.println("位置4");
+                for(Integer dd : getChildrenIds())
+                    sendDown(tuple, dd);
+            }else {
+                //System.out.println("位置5");
+                sendNeighbor(tuple, tuple.getSourceDeviceId());//同级的发给邻居
+            }
+            return false;
+        }
         String moduleName = tuple.getDestModuleName();
         //System.out.println(this.getId() + "  sourceSensor:  " + sourceSensor + " moduleName  " + moduleName + "  sensorModuleChainMap  " + sensorModuleChaineMap);
         Map<String, Integer> map = tuple.getChainMap();
@@ -175,6 +239,9 @@ public class MyFogDevice extends FogDevice{
                 updateTimingsOnSending(tuple);
                 sendToSelf(tuple);
                 return true;
+            }
+            if(this.getLevel()==3){
+                tuple.setSourceDeviceId(this.getParentId());
             }
             sendNeighbor(tuple, toDevcieId);
             return false;

@@ -87,7 +87,7 @@ public class FogDevice extends PowerDatacenter {
     protected double downlinkBandwidth;
     protected double uplinkLatency;
     //@李凯
-    protected double neighborLatency = 5;
+    protected double neighborLatency = 10;
     protected double neighborBandwidth=10000;
     protected List<Pair<Integer, Double>> associatedActuatorIds;
     protected List<Pair<Integer, Integer>> tupleFromNeighbor = new ArrayList<Pair<Integer, Integer>>();
@@ -915,6 +915,11 @@ public class FogDevice extends PowerDatacenter {
 
     protected void processModuleArrival(SimEvent ev){
         AppModule module = (AppModule)ev.getData();
+        for(String moId :moduleNameToId.keySet()){
+            if(moduleNameToId.get(moId).getFirst().equals(module.getName())){
+                return;
+            }
+        }
         //System.out.println(module.getName() + "   " + module.getLevel());
         String appId = module.getAppId();
         if(!appToModulesMap.containsKey(appId)){
@@ -1047,11 +1052,27 @@ public class FogDevice extends PowerDatacenter {
     }
 
     protected void sendNeighbor(Tuple tuple, int neighborId){
-        tuple.setFromneighbor(neighborId);
-        if(!isNeighborBusy()){
-            sendNeighborFreeLink(tuple, neighborId);
-        }else{
-            neighborTupleQueue.add(new Pair<Tuple, Integer>(tuple, neighborId));
+        for(NeighborInArea neighborInArea : neighbors){
+            if(neighborInArea.getId()==neighborId){
+                tuple.setFromneighbor(neighborId);
+                if(!isNeighborBusy()){
+                    sendNeighborFreeLink(tuple, neighborId);
+                }else{
+                    neighborTupleQueue.add(new Pair<Tuple, Integer>(tuple, neighborId));
+                }
+                return;
+            }
+        }
+        if(tuple.getDirection()==Tuple.UP){
+            sendUp(tuple);
+            //System.out.println(getName() + "     up    " + tuple.getDestModuleName()  + "   neiborId  " + neighborId);
+        }else if(tuple.getDirection()==Tuple.DOWN){
+            for(int childId : getChildrenIds())
+                sendDown(tuple, childId);
+            //System.out.println(getName() + "     down   " + tuple.getDestModuleName() + "   neiborId  " + neighborId);
+        }else if(tuple.getDirection()==Tuple.ACTUATOR){
+            sendTupleToActuator(tuple);
+            //System.out.println(getName() + "     to actuator   " + tuple.getDestModuleName() + "   neiborId  " + neighborId);
         }
     }
 
