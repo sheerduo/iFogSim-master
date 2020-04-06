@@ -245,7 +245,7 @@ public class test4 {
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
         for(int i=0;i<numOfMobilesPerDept;i++){
             int numofDc = 2;
-            int numofHe = 4;
+            int numofHe = 3;
             //List<FogDevice> AreaFogDevices = new ArrayList<FogDevice>();
             List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
             String mobileId = id+"-"+i;
@@ -353,7 +353,7 @@ public class test4 {
         FogDevice fogdevice = null;
         try {
             fogdevice = new MyFogDevice(nodeName, characteristics,
-                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips);
+                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips, idlePower);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -444,9 +444,9 @@ public class PlaceMappingGenerted extends ModulePlacement{
         Map<String, List<Integer>>  rePlaceSensor = new HashMap<>();
         Set<String> apps = chain.keySet();
 
-        for(Integer sensor111 :  TimeKeeper.getInstance().getSensorIdToActuator().keySet()){
-            System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111) + "  num: " + TimeKeeper.getInstance().getSensorIdToNum().get(sensor111));
-        }
+        /*for(Integer sensor111 :  TimeKeeper.getInstance().getSensorIdToActuator().keySet()){
+            //System.out.println("SensorId : " + sensor111 + " : " + TimeKeeper.getInstance().getSensorIdToActuator().get(sensor111) + "  num: " + TimeKeeper.getInstance().getSensorIdToNum().get(sensor111));
+        }*/
 
         for(String app:apps){
             Map<Integer, List<String>> chainOfApp = chain.get(app);

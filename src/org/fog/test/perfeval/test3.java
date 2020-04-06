@@ -331,7 +331,7 @@ public class test3 {
         FogDevice fogdevice = null;
         try {
             fogdevice = new MyFogDevice(nodeName, characteristics,
-                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips);
+                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips, idlePower);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -147,17 +147,24 @@ public class GenertedController extends Controller {
         for(AreaOfDevice area : areas){
            List<FogDevice> devices = area.getArea();
            for(FogDevice de : devices){
-               energy+=de.getEnergyConsumption()/40000;
-               totalennergy += de.getEnergyConsumption();
+               //de.getHost().getPowerModel().getPower()
+               double staticPower = de.getStaticPower()*500;
+               double tempenergy = de.getEnergyConsumption()-staticPower;
+               energy+=(tempenergy);
+                System.out.println(de.getId() + "  " + tempenergy);
+               totalennergy += tempenergy;
            }
         }
 
        // energy += placeMappingGenerted.getDeviceByName("cloud").getEnergyConsumption()/70000;
         System.out.println("energy: " + energy + "   value: " + value  + " edge server energy: " + totalennergy + "  cloud energy: " + placeMappingGenerted.getDeviceByName("cloud").getEnergyConsumption());
         energy = energy/(areas.get(0).getArea().size());
-        value = value/200;
+        energy = energy/10000;
+        value = value/100;
 
-        double result = 0.7*energy + 0.3*value;
+        double result = 0.5*value;
+
+        System.out.println("result   :   " + result + "  energy:  " + energy +  "  latency   " + value);
         return result;
     }
 

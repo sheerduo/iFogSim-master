@@ -236,6 +236,7 @@ public class testplace {
             genertedController.printNetworkUsageDetails();
             genertedController.printCostDetails();
             genertedController.printPowerDetails();
+            System.out.println("EXECUTION TIME : "+ (Calendar.getInstance().getTimeInMillis() - TimeKeeper.getInstance().getSimulationStartTime()));
             CloudSim.stopSimulation();
 
         }catch (Exception e) {
@@ -276,7 +277,7 @@ public class testplace {
     }
 
     private static FogDevice addGw1(String id, int parentId){
-        FogDevice dept = createFogDevice("dd-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dd-"+id, 2800, 4000, 10000, 10000, 2, 0.0, 104.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
@@ -303,7 +304,7 @@ public class testplace {
         return dept;
     }
     private static FogDevice addGw2(String id, int parentId){
-        FogDevice dept = createFogDevice("dh-"+id, 3000, 4000, 10000, 10000, 2, 0.0, 107.339, 83.4333);
+        FogDevice dept = createFogDevice("dh-"+id, 6000, 4000, 10000, 10000, 2, 0.0, 143.339, 83.4333);
         fogDevices.add(dept);
         dept.setParentId(parentId);
         dept.setUplinkLatency(4); // latency of connection between gateways and proxy server is 4 ms
@@ -417,7 +418,7 @@ public class testplace {
         FogDevice fogdevice = null;
         try {
             fogdevice = new MyFogDevice(nodeName, characteristics,
-                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips);
+                    new AppModuleAllocationPolicy(hostList), storageList, 10, upBw, downBw, 0, ratePerMips, idlePower);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -118,6 +118,8 @@ public class FogDevice extends PowerDatacenter {
 
     protected double totalCost;
 
+    protected double staticPower;
+
     protected Map<String, Map<String, Integer>> moduleInstanceCount;
 
     /**
@@ -125,6 +127,7 @@ public class FogDevice extends PowerDatacenter {
      */
     protected NeighborInArea selfInfo;
     protected List<NeighborInArea> neighbors = new ArrayList<NeighborInArea>();
+
 
     public FogDevice(
             String name,
@@ -145,6 +148,62 @@ public class FogDevice extends PowerDatacenter {
         setUplinkLatency(uplinkLatency);
         setRatePerMips(ratePerMips);
         setAssociatedActuatorIds(new ArrayList<Pair<Integer, Double>>());
+        //setStaticPower(staticPower);
+        for (Host host : getCharacteristics().getHostList()) {
+            host.setDatacenter(this);
+        }
+        setActiveApplications(new ArrayList<String>());
+        // If this resource doesn't have any PEs then no useful at all
+        if (getCharacteristics().getNumberOfPes() == 0) {
+            throw new Exception(super.getName()
+                    + " : Error - this entity has no PEs. Therefore, can't process any Cloudlets.");
+        }
+        // stores id of this class
+        getCharacteristics().setId(super.getId());
+
+        applicationMap = new HashMap<String, Application>();
+        appToModulesMap = new HashMap<String, List<String>>();
+        northTupleQueue = new LinkedList<Tuple>();
+        southTupleQueue = new LinkedList<Pair<Tuple, Integer>>();
+        setNorthLinkBusy(false);
+        setSouthLinkBusy(false);
+
+
+        setChildrenIds(new ArrayList<Integer>());
+        setChildToOperatorsMap(new HashMap<Integer, List<String>>());
+
+        this.cloudTrafficMap = new HashMap<Integer, Integer>();
+
+        this.lockTime = 0;
+
+        this.energyConsumption = 0;
+        this.lastUtilization = 0;
+        setTotalCost(0);
+        setModuleInstanceCount(new HashMap<String, Map<String, Integer>>());
+        setChildToLatencyMap(new HashMap<Integer, Double>());
+        System.out.println(getName() + "  :  " + getId());
+    }
+
+    public FogDevice(
+            String name,
+            FogDeviceCharacteristics characteristics,
+            VmAllocationPolicy vmAllocationPolicy,
+            List<Storage> storageList,
+            double schedulingInterval,
+            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, double staticPower) throws Exception {
+        super(name, characteristics, vmAllocationPolicy, storageList, schedulingInterval);
+        setCharacteristics(characteristics);
+        setVmAllocationPolicy(vmAllocationPolicy);
+        setLastProcessTime(0.0);
+        setStorageList(storageList);
+        setVmList(new ArrayList<Vm>());
+        setSchedulingInterval(schedulingInterval);
+        setUplinkBandwidth(uplinkBandwidth);
+        setDownlinkBandwidth(downlinkBandwidth);
+        setUplinkLatency(uplinkLatency);
+        setRatePerMips(ratePerMips);
+        setAssociatedActuatorIds(new ArrayList<Pair<Integer, Double>>());
+        setStaticPower(staticPower);
         for (Host host : getCharacteristics().getHostList()) {
             host.setDatacenter(this);
         }
@@ -1709,5 +1768,13 @@ public class FogDevice extends PowerDatacenter {
     public void clearTupleFromNeighbor(){
         this.tupleFromNeighbor.clear();
         getHost().getVmScheduler().deallocatePesForAllVms();
+    }
+
+    public double getStaticPower() {
+        return staticPower;
+    }
+
+    public void setStaticPower(double staticPower) {
+        this.staticPower = staticPower;
     }
 }

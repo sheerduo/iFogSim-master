@@ -22,8 +22,8 @@ public class MyFogDevice extends FogDevice{
             VmAllocationPolicy vmAllocationPolicy,
             List<Storage> storageList,
             double schedulingInterval,
-            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips) throws Exception{
-        super(name, characteristics, vmAllocationPolicy, storageList, schedulingInterval, uplinkBandwidth, downlinkBandwidth, uplinkLatency, ratePerMips);
+            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, double staticPower) throws Exception{
+        super(name, characteristics, vmAllocationPolicy, storageList, schedulingInterval, uplinkBandwidth, downlinkBandwidth, uplinkLatency, ratePerMips, staticPower);
     }
 
 
